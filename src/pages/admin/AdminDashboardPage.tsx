@@ -17,6 +17,9 @@ export function AdminDashboardPage() {
           {pendingRequests} pending movie {pendingRequests === 1 ? 'request' : 'requests'} —{' '}
           <Link to="/admin/requests">review</Link>
         </li>
+        <li>
+          <Link to="/admin/analytics">View engagement analytics</Link>
+        </li>
       </ul>
     </div>
   );

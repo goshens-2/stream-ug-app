@@ -1,0 +1,50 @@
+.admin-analytics__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.admin-analytics__stat {
+  background: #1c1c1c;
+  border: 1px solid #262626;
+  border-radius: 8px;
+  padding: 0.9rem 1.2rem;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.admin-analytics__stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.admin-analytics__stat-label {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.admin-analytics section {
+  margin-bottom: 1.5rem;
+}
+
+.admin-analytics h2 {
+  font-size: 1rem;
+}
+
+.status {
+  text-transform: capitalize;
+  font-weight: 600;
+}
+.status--pending {
+  color: #f5c518;
+}
+.status--approved,
+.status--fulfilled {
+  color: #2ecc71;
+}
+.status--rejected {
+  color: #e74c3c;
+}

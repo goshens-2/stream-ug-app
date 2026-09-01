@@ -9,7 +9,7 @@ import './AuthPage.css';
 export function SignupPage() {
   const { isAuthenticated, signup } = useAppState();
   const navigate = useNavigate();
-  const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -28,7 +28,7 @@ export function SignupPage() {
       return;
     }
     setSubmitting(true);
-    const result = await signup(name, email, password);
+    const result = await signup(username, email, password);
     setSubmitting(false);
     if (!result.success) {
       setError(result.error ?? 'Unable to sign up.');
@@ -63,8 +63,13 @@ export function SignupPage() {
       <h1>Sign Up</h1>
       <form className="auth-page__form" onSubmit={handleSubmit}>
         <label>
-          Name
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" required />
+          Username
+          <input
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Choose a username"
+            required
+          />
         </label>
         <label>
           Email

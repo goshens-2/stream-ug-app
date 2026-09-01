@@ -1,3 +1,4 @@
+import type { SyntheticEvent } from 'react';
 import type { WatermarkSettings } from '../types';
 import './WatermarkedVideo.css';
 
@@ -10,6 +11,7 @@ interface WatermarkedVideoProps {
   muted?: boolean;
   controls?: boolean;
   className?: string;
+  onTimeUpdate?: (event: SyntheticEvent<HTMLVideoElement>) => void;
 }
 
 /** A <video> element with an optional overlaid text watermark. */
@@ -22,6 +24,7 @@ export function WatermarkedVideo({
   muted = true,
   controls = false,
   className,
+  onTimeUpdate,
 }: WatermarkedVideoProps) {
   return (
     <div className={`watermarked-video ${className ?? ''}`}>
@@ -33,6 +36,7 @@ export function WatermarkedVideo({
         muted={muted}
         controls={controls}
         playsInline
+        onTimeUpdate={onTimeUpdate}
       />
       {watermark.enabled && (
         <span

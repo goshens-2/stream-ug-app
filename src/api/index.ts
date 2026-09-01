@@ -10,3 +10,7 @@ export * from './contentTypesApi';
 export * from './movieRequestsApi';
 export * from './ratingsApi';
 export * from './profileApi';
+export * from './favoritesApi';
+export * from './viewHistoryApi';
+export * from './searchLogApi';
+export * from './notificationsApi';

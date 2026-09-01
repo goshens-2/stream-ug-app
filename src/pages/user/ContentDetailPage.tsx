@@ -1,4 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
+import type { SyntheticEvent } from 'react';
 import { useAppState } from '../../context/AppStateContext';
 import { WatermarkedVideo } from '../../components/WatermarkedVideo';
 import { RatingStars } from '../../components/RatingStars';
@@ -8,7 +9,17 @@ import './ContentDetailPage.css';
 /** Watch page for a single piece of content: player, details, and rating. */
 export function ContentDetailPage() {
   const { contentId } = useParams<{ contentId: string }>();
-  const { contents, categories, contentTypes, ratings, currentUser, rateContent } =
+  const {
+    contents,
+    categories,
+    contentTypes,
+    ratings,
+    currentUser,
+    rateContent,
+    isFavorite,
+    toggleFavorite,
+    recordView,
+  } =
     useAppState();
 
   const content = contents.find((c) => c.id === contentId);
@@ -28,6 +39,13 @@ export function ContentDetailPage() {
     (r) => r.contentId === content.id && r.userId === currentUser?.id,
   )?.score ?? 0;
   const averageRating = getAverageRating(content.id, ratings);
+  const favorited = isFavorite(content.id);
+
+  const handleTimeUpdate = (event: SyntheticEvent<HTMLVideoElement>) => {
+    const video = event.currentTarget;
+    if (!Number.isFinite(video.duration) || video.duration === 0) return;
+    recordView(content.id, Math.floor(video.currentTime), Math.floor(video.duration));
+  };
 
   return (
     <div className="content-detail">
@@ -36,8 +54,18 @@ export function ContentDetailPage() {
         poster={content.posterUrl}
         watermark={content.watermark}
         controls
+        onTimeUpdate={handleTimeUpdate}
       />
-      <h1>{content.title}</h1>
+      <div className="content-detail__heading">
+        <h1>{content.title}</h1>
+        <button
+          type="button"
+          className="content-detail__favorite"
+          onClick={() => toggleFavorite(content.id)}
+        >
+          {favorited ? '★ In Watchlist' : '☆ Add to Watchlist'}
+        </button>
+      </div>
       <p className="content-detail__meta">
         {contentType?.name} &middot; {category?.name} &middot; {content.releaseYear} &middot;{' '}
         {content.durationMinutes}m

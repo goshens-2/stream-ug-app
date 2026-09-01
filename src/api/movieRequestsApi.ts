@@ -53,9 +53,13 @@ export async function insertMovieRequest(request: NewMovieRequest): Promise<Movi
 export async function updateMovieRequestStatus(
   id: string,
   status: MovieRequest['status'],
+  fulfilledContentId?: string,
 ): Promise<void> {
   if (!isSupabaseConfigured) return;
 
-  const { error } = await supabase.from('movie_requests').update({ status }).eq('id', id);
+  const { error } = await supabase
+    .from('movie_requests')
+    .update({ status, fulfilled_content_id: fulfilledContentId ?? null })
+    .eq('id', id);
   if (error) throw error;
 }

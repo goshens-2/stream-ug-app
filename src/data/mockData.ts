@@ -3,9 +3,13 @@ import type {
   Category,
   Content,
   ContentType,
+  Favorite,
   MovieRequest,
+  Notification,
   Rating,
+  SearchLogEntry,
   User,
+  ViewHistoryEntry,
 } from '../types';
 
 /** Sample content types the admin has defined. */
@@ -267,6 +271,61 @@ export const movieRequests: MovieRequest[] = [
     title: 'Latest Korean drama season',
     requestedBy: 'user-2',
     status: 'approved',
+    createdAt: now,
+  },
+  {
+    id: 'request-3',
+    title: 'Hearts in Havana',
+    note: 'Heard great things about this telenovela!',
+    requestedBy: 'user-2',
+    status: 'fulfilled',
+    createdAt: now,
+    fulfilledContentId: 'content-13',
+  },
+];
+
+/** Sample favorites/watchlist entries. */
+export const favorites: Favorite[] = [
+  { id: 'fav-1', userId: 'user-1', contentId: 'content-7', createdAt: now },
+  { id: 'fav-2', userId: 'user-2', contentId: 'content-12', createdAt: now },
+];
+
+/** Sample view history, used for "Continue Watching" / "Recently Viewed". */
+export const viewHistory: ViewHistoryEntry[] = [
+  {
+    id: 'view-1',
+    userId: 'user-1',
+    contentId: 'content-1',
+    progressSeconds: 42,
+    durationSeconds: 118 * 60,
+    updatedAt: now,
+  },
+  {
+    id: 'view-2',
+    userId: 'user-1',
+    contentId: 'content-12',
+    progressSeconds: 132 * 60,
+    durationSeconds: 132 * 60,
+    updatedAt: now,
+  },
+];
+
+/** Sample search history, used to power "most searched movie" admin analytics. */
+export const searchLogs: SearchLogEntry[] = [
+  { id: 'search-1', userId: 'user-1', query: 'blade of the east', matchedContentId: 'content-7', createdAt: now },
+  { id: 'search-2', userId: 'user-2', query: 'lagos to lahore', matchedContentId: 'content-12', createdAt: now },
+  { id: 'search-3', userId: 'user-1', query: 'lagos to lahore', matchedContentId: 'content-12', createdAt: now },
+];
+
+/** Sample notifications, e.g. alerting a user their request was fulfilled. */
+export const notifications: Notification[] = [
+  {
+    id: 'notif-1',
+    userId: 'user-2',
+    type: 'request_fulfilled',
+    message: 'Your requested title "Hearts in Havana" is now available to watch!',
+    contentId: 'content-13',
+    read: false,
     createdAt: now,
   },
 ];

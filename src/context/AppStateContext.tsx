@@ -5,24 +5,41 @@ import {
   categories as initialCategories,
   contentTypes as initialContentTypes,
   contents as initialContents,
+  favorites as initialFavorites,
   movieRequests as initialMovieRequests,
+  notifications as initialNotifications,
   ratings as initialRatings,
+  searchLogs as initialSearchLogs,
   users as initialUsers,
+  viewHistory as initialViewHistory,
 } from '../data/mockData';
 import {
+  addFavorite as addFavoriteApi,
+  deleteOwnProfile,
   fetchCategories,
   fetchContentTypes,
   fetchContents,
+  fetchFavorites,
   fetchMovieRequests,
+  fetchNotifications,
   fetchProfile,
   fetchRatings,
+  fetchSearchLogs,
+  fetchViewHistory,
   insertCategory,
   insertContent,
   insertContentType,
   insertMovieRequest,
+  insertNotification,
+  insertSearchLog,
+  markNotificationRead as markNotificationReadApi,
+  removeFavorite as removeFavoriteApi,
+  updateAuthPassword,
   updateMovieRequestStatus as updateMovieRequestStatusApi,
+  updateProfileName,
   upsertContent,
   upsertRating,
+  upsertViewHistory,
 } from '../api';
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
 import type {
@@ -32,9 +49,13 @@ import type {
   Category,
   Content,
   ContentType,
+  Favorite,
   MovieRequest,
+  Notification,
   Rating,
+  SearchLogEntry,
   User,
+  ViewHistoryEntry,
 } from '../types';
 
 /** Input for creating new content; `id`/timestamps are assigned by the DB (or the mock fallback). */
@@ -52,21 +73,37 @@ interface AppState {
   ratings: Rating[];
   users: User[];
   accounts: Account[];
+  favorites: Favorite[];
+  viewHistory: ViewHistoryEntry[];
+  searchLogs: SearchLogEntry[];
+  notifications: Notification[];
   session: AuthSession | null;
   isAuthenticated: boolean;
   currentUser: User | null;
   /** True while the initial Supabase Auth session is being resolved on load. */
   authLoading: boolean;
   login: (email: string, password: string) => Promise<AuthResult>;
-  signup: (name: string, email: string, password: string) => Promise<AuthResult>;
+  signup: (username: string, email: string, password: string) => Promise<AuthResult>;
   logout: () => void;
   addContent: (content: NewContent) => void;
   updateContent: (content: Content) => void;
   addContentType: (contentType: NewContentType) => void;
   addCategory: (category: NewCategory) => void;
   submitMovieRequest: (title: string, note?: string) => void;
-  updateMovieRequestStatus: (id: string, status: MovieRequest['status']) => void;
+  updateMovieRequestStatus: (
+    id: string,
+    status: MovieRequest['status'],
+    fulfilledContentId?: string,
+  ) => void;
   rateContent: (contentId: string, score: number) => void;
+  isFavorite: (contentId: string) => boolean;
+  toggleFavorite: (contentId: string) => void;
+  recordView: (contentId: string, progressSeconds: number, durationSeconds: number) => void;
+  logSearch: (query: string, matchedContentId?: string) => void;
+  markNotificationRead: (id: string) => void;
+  changeUsername: (name: string) => Promise<AuthResult>;
+  changePassword: (password: string) => Promise<AuthResult>;
+  deleteAccount: () => Promise<AuthResult>;
 }
 
 const AppStateContext = createContext<AppState | undefined>(undefined);
@@ -79,6 +116,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [ratings, setRatings] = useState<Rating[]>(initialRatings);
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [accounts, setAccounts] = useState<Account[]>(initialAccounts);
+  const [favorites, setFavorites] = useState<Favorite[]>(initialFavorites);
+  const [viewHistory, setViewHistory] = useState<ViewHistoryEntry[]>(initialViewHistory);
+  const [searchLogs, setSearchLogs] = useState<SearchLogEntry[]>(initialSearchLogs);
+  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
   const [session, setSession] = useState<AuthSession | null>(null);
   const [authLoading, setAuthLoading] = useState<boolean>(isSupabaseConfigured);
 
@@ -95,6 +136,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     void fetchContentTypes().then((data) => !cancelled && setContentTypes(data));
     void fetchMovieRequests().then((data) => !cancelled && setMovieRequests(data));
     void fetchRatings().then((data) => !cancelled && setRatings(data));
+    void fetchFavorites().then((data) => !cancelled && setFavorites(data));
+    void fetchViewHistory().then((data) => !cancelled && setViewHistory(data));
+    void fetchSearchLogs().then((data) => !cancelled && setSearchLogs(data));
+    void fetchNotifications().then((data) => !cancelled && setNotifications(data));
 
     return () => {
       cancelled = true;
@@ -173,11 +218,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     return { success: false, error: 'Incorrect password.' };
   };
 
-  const signup = async (name: string, email: string, password: string): Promise<AuthResult> => {
-    const trimmedName = name.trim();
+  const signup = async (username: string, email: string, password: string): Promise<AuthResult> => {
+    const trimmedName = username.trim();
     const normalizedEmail = email.trim().toLowerCase();
     if (!trimmedName || !normalizedEmail || !password) {
-      return { success: false, error: 'Name, email, and password are all required.' };
+      return { success: false, error: 'Username, email, and password are all required.' };
     }
 
     if (isSupabaseConfigured) {
@@ -227,6 +272,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     ratings,
     users,
     accounts,
+    favorites,
+    viewHistory,
+    searchLogs,
+    notifications,
     session,
     isAuthenticated,
     currentUser,
@@ -281,11 +330,43 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         setMovieRequests((prev) => prev.map((r) => (r.id === localRequest.id ? created : r)));
       });
     },
-    updateMovieRequestStatus: (id, status) => {
+    updateMovieRequestStatus: (id, status, fulfilledContentId) => {
       setMovieRequests((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, status } : r)),
+        prev.map((r) => (r.id === id ? { ...r, status, fulfilledContentId: fulfilledContentId ?? r.fulfilledContentId } : r)),
       );
-      void updateMovieRequestStatusApi(id, status);
+      void updateMovieRequestStatusApi(id, status, fulfilledContentId);
+
+      // Notify the requester when their request is fulfilled, so they can
+      // find the uploaded content from "My Watchlist".
+      if (status === 'fulfilled') {
+        const request = movieRequests.find((r) => r.id === id);
+        const contentId = fulfilledContentId ?? request?.fulfilledContentId;
+        const requestedBy = request?.requestedBy;
+        if (requestedBy && requestedBy !== 'unknown') {
+          const content = contentId ? contents.find((c) => c.id === contentId) : undefined;
+          const localNotification: Notification = {
+            id: `notif-${Date.now()}`,
+            userId: requestedBy,
+            type: 'request_fulfilled',
+            message: content
+              ? `Your requested title "${content.title}" is now available to watch!`
+              : `Your requested title "${request?.title}" is now available to watch!`,
+            contentId,
+            read: false,
+            createdAt: new Date().toISOString(),
+          };
+          setNotifications((prev) => [localNotification, ...prev]);
+          void insertNotification({
+            userId: requestedBy,
+            type: 'request_fulfilled',
+            message: localNotification.message,
+            contentId,
+          }).then((created) => {
+            if (created.id === localNotification.id) return;
+            setNotifications((prev) => prev.map((n) => (n.id === localNotification.id ? created : n)));
+          });
+        }
+      }
     },
     rateContent: (contentId, score) => {
       if (!currentUser) return;
@@ -315,6 +396,123 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         }
         return [localRating, ...prev];
       });
+    },
+    isFavorite: (contentId) => {
+      if (!currentUser) return false;
+      return favorites.some((f) => f.userId === currentUser.id && f.contentId === contentId);
+    },
+    toggleFavorite: (contentId) => {
+      if (!currentUser) return;
+      const userId = currentUser.id;
+      const existing = favorites.find((f) => f.userId === userId && f.contentId === contentId);
+      if (existing) {
+        setFavorites((prev) => prev.filter((f) => f.id !== existing.id));
+        void removeFavoriteApi(userId, contentId);
+        return;
+      }
+      const localFavorite: Favorite = {
+        id: `fav-${Date.now()}`,
+        userId,
+        contentId,
+        createdAt: new Date().toISOString(),
+      };
+      setFavorites((prev) => [localFavorite, ...prev]);
+      void addFavoriteApi(userId, contentId).then((created) => {
+        if (created.id === localFavorite.id) return;
+        setFavorites((prev) => prev.map((f) => (f.id === localFavorite.id ? created : f)));
+      });
+    },
+    recordView: (contentId, progressSeconds, durationSeconds) => {
+      if (!currentUser) return;
+      const userId = currentUser.id;
+      setViewHistory((prev) => {
+        const existingIndex = prev.findIndex((v) => v.userId === userId && v.contentId === contentId);
+        const localEntry: ViewHistoryEntry = {
+          id: existingIndex >= 0 ? prev[existingIndex].id : `view-${Date.now()}`,
+          userId,
+          contentId,
+          progressSeconds,
+          durationSeconds,
+          updatedAt: new Date().toISOString(),
+        };
+        if (existingIndex >= 0) {
+          const copy = [...prev];
+          copy[existingIndex] = localEntry;
+          return copy;
+        }
+        return [localEntry, ...prev];
+      });
+      void upsertViewHistory({ userId, contentId, progressSeconds, durationSeconds });
+    },
+    logSearch: (query, matchedContentId) => {
+      const trimmed = query.trim();
+      if (!trimmed) return;
+      const localEntry: SearchLogEntry = {
+        id: `search-${Date.now()}`,
+        userId: currentUser?.id,
+        query: trimmed,
+        matchedContentId,
+        createdAt: new Date().toISOString(),
+      };
+      setSearchLogs((prev) => [localEntry, ...prev]);
+      void insertSearchLog({ userId: currentUser?.id, query: trimmed, matchedContentId });
+    },
+    markNotificationRead: (id) => {
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+      void markNotificationReadApi(id);
+    },
+    changeUsername: async (name) => {
+      const trimmed = name.trim();
+      if (!currentUser) return { success: false, error: 'You must be signed in.' };
+      if (!trimmed) return { success: false, error: 'Username is required.' };
+
+      if (isSupabaseConfigured) {
+        try {
+          await updateProfileName(currentUser.id, trimmed);
+        } catch (err) {
+          return { success: false, error: err instanceof Error ? err.message : 'Unable to update username.' };
+        }
+      }
+      setUsers((prev) => prev.map((u) => (u.id === currentUser.id ? { ...u, name: trimmed } : u)));
+      setSession((prev) => (prev ? { user: { ...prev.user, name: trimmed } } : prev));
+      return { success: true };
+    },
+    changePassword: async (password) => {
+      if (!currentUser) return { success: false, error: 'You must be signed in.' };
+      if (!password || password.length < 6) {
+        return { success: false, error: 'Password must be at least 6 characters.' };
+      }
+
+      if (isSupabaseConfigured) {
+        try {
+          await updateAuthPassword(password);
+        } catch (err) {
+          return { success: false, error: err instanceof Error ? err.message : 'Unable to change password.' };
+        }
+        return { success: true };
+      }
+
+      setAccounts((prev) => prev.map((a) => (a.userId === currentUser.id ? { ...a, password } : a)));
+      return { success: true };
+    },
+    deleteAccount: async () => {
+      if (!currentUser) return { success: false, error: 'You must be signed in.' };
+      const userId = currentUser.id;
+
+      if (isSupabaseConfigured) {
+        try {
+          await deleteOwnProfile(userId);
+        } catch (err) {
+          return { success: false, error: err instanceof Error ? err.message : 'Unable to delete account.' };
+        }
+        void supabase.auth.signOut();
+        return { success: true };
+      }
+
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+      setAccounts((prev) => prev.filter((a) => a.userId !== userId));
+      setSession(null);
+      return { success: true };
     },
   };
 
