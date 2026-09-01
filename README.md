@@ -88,22 +88,32 @@ src/
                           Recommendation algorithm scaffold based on ratings
                           and category affinity
   utils/analytics.ts       Admin engagement analytics (most rated/watched/
-                          searched, trending requests, most favorited)
-  components/             Shared UI: Navbar (with notifications + profile
-                          menu), layouts, ContentCard, CategoryRow,
-                          WatermarkedVideo, TrailerMarquee (autoplay-on-scroll),
-                          RatingStars
+                          searched, trending requests, most favorited) and
+                          the `getWatchCounts`/`formatCompactCount` helpers
+                          used to show per-title watch-count badges
+  utils/collections.ts     Shared builders for the Home page's rails
+                          (trending, popular, recently added, recommended,
+                          continue watching, recently viewed), reused by
+                          `ExplorePage` so "Explore more" shows the same
+                          ordering as the row it came from
+  components/             Shared UI: Navbar (search with live suggestions,
+                          notifications, profile menu), layouts, ContentCard
+                          (poster + watch-count badge), CategoryRow
+                          (horizontal rail with an optional "Explore more"
+                          link), WatermarkedVideo, TrailerMarquee
+                          (autoplay-on-scroll), RatingStars
   pages/landing/           Public Home/Landing page shown to signed-out
                           visitors at `/`, with links to Login and Signup
   pages/auth/              Login (`/login`) and Signup (`/signup`) pages
   pages/user/              User Panel web pages (mounted under `/browse`):
-                          Browse (category rows, trailer marquee, genre
-                          filter/sort, continue watching, recently viewed,
-                          featured & trending), Content detail/watch page,
-                          Movie request form, Trailers search page, My
-                          Watchlist (requests/uploaded-for-me/recommended/
-                          favorites), Account Settings (username/password/
-                          delete account)
+                          Browse (horizontal rails, trailer marquee, genre
+                          filter/sort), Content detail/watch page (trailer
+                          preview toggle, related/recommended rails), Movie
+                          request form, Trailers search page, full rail/genre
+                          listing (`ExplorePage`, "Explore more"), site-wide
+                          search results (`SearchResultsPage`), My Watchlist
+                          (requests/uploaded-for-me/recommended/favorites),
+                          Account Settings (username/password/delete account)
   pages/admin/             Admin Panel web pages (mounted under `/admin`):
                           Dashboard, Content list, Content upload/edit form
                           (incl. watermark settings), Content Types manager,
@@ -124,6 +134,8 @@ src/
 | `/browse/requests`               | signed-in          | User Panel: submit a movie request      |
 | `/browse/trailers`               | signed-in          | User Panel: search & preview trailers   |
 | `/browse/watchlist`              | signed-in          | User Panel: My Watchlist / My Requests  |
+| `/browse/explore/:key`           | signed-in          | User Panel: full listing for a rail/genre ("Explore more") |
+| `/browse/search`                 | signed-in          | User Panel: search results (`?q=`)      |
 | `/browse/account`                | signed-in          | User Panel: Account Settings            |
 | `/admin`, `/admin/*`             | signed-in          | Admin Panel dashboard & management pages |
 | `/admin/analytics`               | signed-in admin    | Admin Panel: engagement analytics       |
@@ -144,15 +156,28 @@ src/
   (`pages/admin/AdminAnalyticsPage.tsx`, `utils/analytics.ts`)
 
 **User Panel**
-- Browse content grouped by category, covering all requested categories
-  (translated movies, local music/audio, comedy, cartoons, sports & football
-  analysis, non-translated movies, anime, campus entertainment, local
-  soaps/series, news, talk shows, Nigerian/Indian/Korean/Chinese movies,
-  telenovelas), plus Featured & Trending, Continue Watching, Recently Viewed,
-  and Recommended For You rows, and a genre filter + sort (trending/newest/
-  top rated/title) control over the full catalog
-- Watch page with watermark overlay, star ratings, and an "Add to Watchlist"
-  (favorite) toggle; watch progress is recorded for Continue Watching
+- Browse content grouped into horizontally-scrollable rails/rows: Trending
+  Now, Continue Watching, Popular on STREAM UG, Recommended For You, Recently
+  Added, Recently Viewed, and one row per category, covering all requested
+  categories (translated movies, local music/audio, comedy, cartoons, sports
+  & football analysis, non-translated movies, anime, campus entertainment,
+  local soaps/series, news, talk shows, Nigerian/Indian/Korean/Chinese
+  movies, telenovelas). Each rail has an "Explore more" link
+  (`pages/user/ExplorePage.tsx`) that opens a full grid of that rail/genre.
+  A genre filter + sort (trending/newest/top rated/title) control sits over
+  the full catalog at the bottom of the page.
+- Every poster shows a watch-count badge (👁 count of distinct viewers,
+  compactly formatted e.g. `1.2K`), derived from `view_history`
+  (`utils/analytics.ts#getWatchCounts`), on cards throughout the app
+- Site-wide search: a search box in the header offers live title suggestions
+  and submits to a full search-results page matching title/description/genre
+  (`components/Navbar.tsx`, `pages/user/SearchResultsPage.tsx`), logging
+  each query for the "most searched" admin analytic
+- Watch page with watermark overlay, star ratings, a "Watch Trailer" toggle
+  to preview the trailer before committing to the full video, an "Add to
+  Watchlist" (favorite) toggle, a watch-count badge, and "More <Genre>" /
+  "Recommended For You" related-content rails; watch progress is recorded
+  for Continue Watching
 - Trailers page: search any title and preview its trailer
   (`pages/user/TrailersPage.tsx`)
 - My Watchlist / My Requests page: movies requested, movies uploaded to

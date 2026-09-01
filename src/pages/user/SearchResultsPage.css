@@ -1,0 +1,14 @@
+.search-results-page h1 {
+  font-size: 1.3rem;
+  margin: 0 0 1rem;
+}
+
+.search-results-page__empty {
+  color: #a0a0a0;
+}
+
+.search-results-page__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+}
