@@ -11,6 +11,8 @@ import { ContentDetailPage } from './pages/user/ContentDetailPage';
 import { MovieRequestPage } from './pages/user/MovieRequestPage';
 import { TrailersPage } from './pages/user/TrailersPage';
 import { WatchlistPage } from './pages/user/WatchlistPage';
+import { ExplorePage } from './pages/user/ExplorePage';
+import { SearchResultsPage } from './pages/user/SearchResultsPage';
 import { AccountSettingsPage } from './pages/user/AccountSettingsPage';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { AdminContentListPage } from './pages/admin/AdminContentListPage';
@@ -35,6 +37,8 @@ function App() {
               <Route path="requests" element={<MovieRequestPage />} />
               <Route path="trailers" element={<TrailersPage />} />
               <Route path="watchlist" element={<WatchlistPage />} />
+              <Route path="explore/:key" element={<ExplorePage />} />
+              <Route path="search" element={<SearchResultsPage />} />
               <Route path="account" element={<AccountSettingsPage />} />
             </Route>
           </Route>

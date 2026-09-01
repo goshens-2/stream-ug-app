@@ -1,5 +1,6 @@
-.content-detail {
+.content-detail__player-column {
   max-width: 720px;
+  margin-bottom: 2rem;
 }
 
 .content-detail__hint {
@@ -19,7 +20,14 @@
   margin: 0;
 }
 
-.content-detail__favorite {
+.content-detail__actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.content-detail__favorite,
+.content-detail__trailer-toggle {
   background: transparent;
   border: 1px solid #e50914;
   color: #e50914;
@@ -28,6 +36,11 @@
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
+}
+
+.content-detail__trailer-toggle {
+  border-color: #f5c518;
+  color: #f5c518;
 }
 
 .content-detail__meta {

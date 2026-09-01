@@ -2,10 +2,31 @@
   margin: 1.5rem 0;
 }
 
+.category-row__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 0 0.6rem;
+}
+
 .category-row__title {
   font-size: 1.1rem;
-  margin: 0 0 0.6rem;
+  margin: 0;
   color: #f5f5f5;
+}
+
+.category-row__explore-more {
+  flex: 0 0 auto;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #f5c518;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.category-row__explore-more:hover {
+  text-decoration: underline;
 }
 
 .category-row__items {

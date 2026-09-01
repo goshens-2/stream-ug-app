@@ -3,57 +3,52 @@ import { useAppState } from '../../context/AppStateContext';
 import { CategoryRow } from '../../components/CategoryRow';
 import { ContentCard } from '../../components/ContentCard';
 import { TrailerMarquee } from '../../components/TrailerMarquee';
-import { getRecommendationsForUser, getAverageRating } from '../../utils/recommendations';
-import { getMostWatched } from '../../utils/analytics';
+import { getAverageRating } from '../../utils/recommendations';
+import { getWatchCounts } from '../../utils/analytics';
+import {
+  getContinueWatching,
+  getPopular,
+  getRecentlyAdded,
+  getRecentlyViewed,
+  getRecommended,
+  getTrending,
+} from '../../utils/collections';
 import type { Content } from '../../types';
 import './HomePage.css';
 
 type SortOption = 'trending' | 'newest' | 'top-rated' | 'title';
 
-/** The main User Panel landing page: trailer marquee and category rows. */
+/** The main User Panel landing page: trailer marquee and horizontal movie rails. */
 export function HomePage() {
   const { contents, categories, ratings, viewHistory, currentUser } = useAppState();
   const [genreFilter, setGenreFilter] = useState<string>('all');
   const [sortOption, setSortOption] = useState<SortOption>('trending');
 
-  const recommendations = useMemo(
-    () => (currentUser ? getRecommendationsForUser(currentUser.id, contents, ratings, 6) : []),
+  const watchCounts = useMemo(() => getWatchCounts(viewHistory), [viewHistory]);
+
+  const trending = useMemo(
+    () => getTrending(contents, ratings, viewHistory),
+    [contents, ratings, viewHistory],
+  );
+
+  const popular = useMemo(() => getPopular(contents, viewHistory), [contents, viewHistory]);
+
+  const recentlyAdded = useMemo(() => getRecentlyAdded(contents), [contents]);
+
+  const recommendedContent = useMemo(
+    () => getRecommended(currentUser?.id, contents, ratings),
     [currentUser, contents, ratings],
   );
 
-  const recommendedContent = recommendations
-    .map((rec) => contents.find((c) => c.id === rec.contentId))
-    .filter((c): c is NonNullable<typeof c> => Boolean(c));
-
-  const myViewHistory = useMemo(
-    () =>
-      viewHistory
-        .filter((v) => v.userId === currentUser?.id)
-        .slice()
-        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
-    [viewHistory, currentUser],
+  const continueWatching = useMemo(
+    () => getContinueWatching(currentUser?.id, contents, viewHistory),
+    [currentUser, contents, viewHistory],
   );
 
-  const continueWatching = myViewHistory
-    .filter((v) => v.durationSeconds > 0 && v.progressSeconds > 0 && v.progressSeconds < v.durationSeconds * 0.95)
-    .map((v) => contents.find((c) => c.id === v.contentId))
-    .filter((c): c is NonNullable<typeof c> => Boolean(c));
-
-  const recentlyViewed = myViewHistory
-    .map((v) => contents.find((c) => c.id === v.contentId))
-    .filter((c): c is NonNullable<typeof c> => Boolean(c))
-    .slice(0, 8);
-
-  const featuredAndTrending = useMemo(() => {
-    const watchCounts = new Map(getMostWatched(viewHistory).map((c) => [c.contentId, c.count]));
-    return contents
-      .slice()
-      .sort((a, b) => {
-        const score = (id: string) => (watchCounts.get(id) ?? 0) * 2 + getAverageRating(id, ratings);
-        return score(b.id) - score(a.id);
-      })
-      .slice(0, 8);
-  }, [contents, viewHistory, ratings]);
+  const recentlyViewed = useMemo(
+    () => getRecentlyViewed(currentUser?.id, contents, viewHistory),
+    [currentUser, contents, viewHistory],
+  );
 
   const filteredAndSorted = useMemo(() => {
     let list: Content[] = genreFilter === 'all' ? contents : contents.filter((c) => c.categoryId === genreFilter);
@@ -69,14 +64,12 @@ export function HomePage() {
         list.sort((a, b) => a.title.localeCompare(b.title));
         break;
       case 'trending':
-      default: {
-        const watchCounts = new Map(getMostWatched(viewHistory).map((c) => [c.contentId, c.count]));
+      default:
         list.sort((a, b) => (watchCounts.get(b.id) ?? 0) - (watchCounts.get(a.id) ?? 0));
         break;
-      }
     }
     return list;
-  }, [contents, genreFilter, sortOption, ratings, viewHistory]);
+  }, [contents, genreFilter, sortOption, ratings, watchCounts]);
 
   return (
     <div className="home-page">
@@ -89,10 +82,12 @@ export function HomePage() {
         </div>
       </section>
 
-      {featuredAndTrending.length > 0 && (
+      {trending.length > 0 && (
         <CategoryRow
-          category={{ id: 'featured', name: 'Featured & Trending', slug: 'featured' }}
-          contents={featuredAndTrending}
+          category={{ id: 'trending', name: 'Trending Now', slug: 'trending' }}
+          contents={trending}
+          exploreMoreTo="/browse/explore/trending"
+          watchCounts={watchCounts}
         />
       )}
 
@@ -100,6 +95,17 @@ export function HomePage() {
         <CategoryRow
           category={{ id: 'continue-watching', name: 'Continue Watching', slug: 'continue-watching' }}
           contents={continueWatching}
+          exploreMoreTo="/browse/explore/continue-watching"
+          watchCounts={watchCounts}
+        />
+      )}
+
+      {popular.length > 0 && (
+        <CategoryRow
+          category={{ id: 'popular', name: 'Popular on STREAM UG', slug: 'popular' }}
+          contents={popular}
+          exploreMoreTo="/browse/explore/popular"
+          watchCounts={watchCounts}
         />
       )}
 
@@ -107,6 +113,17 @@ export function HomePage() {
         <CategoryRow
           category={{ id: 'recommended', name: 'Recommended For You', slug: 'recommended' }}
           contents={recommendedContent}
+          exploreMoreTo="/browse/explore/recommended"
+          watchCounts={watchCounts}
+        />
+      )}
+
+      {recentlyAdded.length > 0 && (
+        <CategoryRow
+          category={{ id: 'recently-added', name: 'Recently Added', slug: 'recently-added' }}
+          contents={recentlyAdded}
+          exploreMoreTo="/browse/explore/recently-added"
+          watchCounts={watchCounts}
         />
       )}
 
@@ -114,6 +131,8 @@ export function HomePage() {
         <CategoryRow
           category={{ id: 'recently-viewed', name: 'Recently Viewed', slug: 'recently-viewed' }}
           contents={recentlyViewed}
+          exploreMoreTo="/browse/explore/recently-viewed"
+          watchCounts={watchCounts}
         />
       )}
 
@@ -122,6 +141,8 @@ export function HomePage() {
           key={category.id}
           category={category}
           contents={contents.filter((c) => c.categoryId === category.id)}
+          exploreMoreTo={`/browse/explore/${category.id}`}
+          watchCounts={watchCounts}
         />
       ))}
 
@@ -153,7 +174,12 @@ export function HomePage() {
         </div>
         <div className="home-page__browse-all-grid">
           {filteredAndSorted.map((content) => (
-            <ContentCard key={content.id} content={content} averageRating={getAverageRating(content.id, ratings)} />
+            <ContentCard
+              key={content.id}
+              content={content}
+              averageRating={getAverageRating(content.id, ratings)}
+              watchCount={watchCounts.get(content.id)}
+            />
           ))}
         </div>
       </section>

@@ -103,3 +103,19 @@ export function getTrendingRequests(requests: MovieRequest[]): RequestTrend[] {
 export function resolveTitle(contentId: string, contents: Content[]): string {
   return contents.find((c) => c.id === contentId)?.title ?? contentId;
 }
+
+/** Builds a `contentId -> watch count` lookup from view history, one row per viewer. */
+export function getWatchCounts(viewHistory: ViewHistoryEntry[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const item of getMostWatched(viewHistory)) {
+    counts.set(item.contentId, item.count);
+  }
+  return counts;
+}
+
+/** Formats a raw count compactly for display, e.g. `1234` -> `1.2K`, `2_500_000` -> `2.5M`. */
+export function formatCompactCount(count: number): string {
+  if (count < 1000) return String(count);
+  if (count < 1_000_000) return `${(count / 1000).toFixed(count % 1000 < 100 ? 0 : 1)}K`;
+  return `${(count / 1_000_000).toFixed(count % 1_000_000 < 100_000 ? 0 : 1)}M`;
+}
