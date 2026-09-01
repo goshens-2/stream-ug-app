@@ -1,8 +1,32 @@
+import { useState } from 'react';
 import { useAppState } from '../../context/AppStateContext';
 
-/** Admin view of categories and how many content items are grouped under each. */
+function slugify(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/** Admin view of categories: how many content items are grouped under each, plus creation. */
 export function AdminCategoriesPage() {
-  const { categories, contents } = useAppState();
+  const { categories, contents, addCategory } = useAppState();
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    const trimmedName = name.trim();
+    if (!trimmedName) return;
+    addCategory({
+      name: trimmedName,
+      slug: slugify(trimmedName),
+      description: description.trim() || undefined,
+    });
+    setName('');
+    setDescription('');
+  };
 
   return (
     <div>
@@ -16,6 +40,18 @@ export function AdminCategoriesPage() {
           </li>
         ))}
       </ul>
+      <h2>Add a Category</h2>
+      <form onSubmit={handleSubmit}>
+        <label>
+          Name
+          <input value={name} onChange={(e) => setName(e.target.value)} required />
+        </label>
+        <label>
+          Description
+          <input value={description} onChange={(e) => setDescription(e.target.value)} />
+        </label>
+        <button type="submit">Add</button>
+      </form>
     </div>
   );
 }
