@@ -8,7 +8,7 @@ export function MovieRequestPage() {
   const [title, setTitle] = useState('');
   const [note, setNote] = useState('');
 
-  const myRequests = movieRequests.filter((r) => r.requestedBy === currentUser.id);
+  const myRequests = movieRequests.filter((r) => r.requestedBy === currentUser?.id);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
