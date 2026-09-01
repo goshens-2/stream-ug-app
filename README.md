@@ -112,8 +112,8 @@ src/
 - Upload/edit content: title, description, content type, trailer, full video,
   watermark settings, category (`pages/admin/AdminContentFormPage.tsx`)
 - Create/manage content types (`pages/admin/AdminContentTypesPage.tsx`)
-- View content grouped by category (`pages/admin/AdminCategoriesPage.tsx`,
-  `pages/admin/AdminContentListPage.tsx`)
+- Create categories and view content grouped by category
+  (`pages/admin/AdminCategoriesPage.tsx`, `pages/admin/AdminContentListPage.tsx`)
 - View & update movie requests submitted by users (`pages/admin/AdminRequestsPage.tsx`)
 
 **User Panel**

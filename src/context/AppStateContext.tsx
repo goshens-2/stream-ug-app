@@ -18,6 +18,7 @@ import {
   fetchProfile,
   fetchRatings,
   fetchSharedAccessGrantor,
+  insertCategory,
   insertContent,
   insertContentType,
   insertMovieRequest,
@@ -43,6 +44,8 @@ import type {
 type NewContent = Omit<Content, 'id' | 'createdAt' | 'updatedAt'>;
 /** Input for creating a new content type; `id` is assigned by the DB (or the mock fallback). */
 type NewContentType = Omit<ContentType, 'id'>;
+/** Input for creating a new category; `id` is assigned by the DB (or the mock fallback). */
+type NewCategory = Omit<Category, 'id'>;
 
 interface AppState {
   contents: Content[];
@@ -65,6 +68,7 @@ interface AppState {
   addContent: (content: NewContent) => void;
   updateContent: (content: Content) => void;
   addContentType: (contentType: NewContentType) => void;
+  addCategory: (category: NewCategory) => void;
   submitMovieRequest: (title: string, note?: string) => void;
   updateMovieRequestStatus: (id: string, status: MovieRequest['status']) => void;
   rateContent: (contentId: string, score: number) => void;
@@ -284,6 +288,14 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       void insertContentType(contentType).then((created) => {
         if (created.id === localContentType.id) return;
         setContentTypes((prev) => prev.map((ct) => (ct.id === localContentType.id ? created : ct)));
+      });
+    },
+    addCategory: (category) => {
+      const localCategory: Category = { ...category, id: `cat-${Date.now()}` };
+      setCategories((prev) => [...prev, localCategory]);
+      void insertCategory(category).then((created) => {
+        if (created.id === localCategory.id) return;
+        setCategories((prev) => prev.map((c) => (c.id === localCategory.id ? created : c)));
       });
     },
     submitMovieRequest: (title, note) => {
