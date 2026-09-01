@@ -89,17 +89,25 @@ src/
                           and category affinity
   utils/analytics.ts       Admin engagement analytics (most rated/watched/
                           searched, trending requests, most favorited)
-  components/             Shared UI: Navbar (with notifications + profile
-                          menu), layouts, ContentCard, CategoryRow,
-                          WatermarkedVideo, TrailerMarquee (autoplay-on-scroll),
-                          RatingStars
+  utils/collections.ts     Shared homepage "row"/collection helpers (featured
+                          & trending, continue watching, recently viewed,
+                          recommended, watch-count lookups) used by the
+                          Browse page, Category page, and Content detail page
+  components/             Shared UI: Navbar (with search box, notifications,
+                          profile menu), layouts, ContentCard (poster, rating,
+                          watch count), CategoryRow (horizontal row + Explore
+                          more link), WatermarkedVideo, TrailerMarquee
+                          (autoplay-on-scroll), RatingStars
   pages/landing/           Public Home/Landing page shown to signed-out
                           visitors at `/`, with links to Login and Signup
   pages/auth/              Login (`/login`) and Signup (`/signup`) pages
   pages/user/              User Panel web pages (mounted under `/browse`):
                           Browse (category rows, trailer marquee, genre
                           filter/sort, continue watching, recently viewed,
-                          featured & trending), Content detail/watch page,
+                          featured & trending, "Explore more" links), Category
+                          page (full listing for one row/genre), Search
+                          results page, Content detail/watch page (with
+                          watch count, related movies, and recommendations),
                           Movie request form, Trailers search page, My
                           Watchlist (requests/uploaded-for-me/recommended/
                           favorites), Account Settings (username/password/
@@ -120,6 +128,8 @@ src/
 | `/login`                         | public             | Login                                   |
 | `/signup`                        | public             | Signup (username, email, password)      |
 | `/browse`                        | signed-in          | User Panel: browse content              |
+| `/browse/category/:categoryId`   | signed-in          | User Panel: full listing for a row/genre ("Explore more") |
+| `/browse/search?q=`              | signed-in          | User Panel: search results across the whole catalog |
 | `/browse/watch/:contentId`       | signed-in          | User Panel: watch/content detail        |
 | `/browse/requests`               | signed-in          | User Panel: submit a movie request      |
 | `/browse/trailers`               | signed-in          | User Panel: search & preview trailers   |
@@ -129,6 +139,7 @@ src/
 | `/admin/analytics`               | signed-in admin    | Admin Panel: engagement analytics       |
 
 ## Feature coverage
+
 
 **Admin Panel**
 - Upload/edit content: title, description, content type, trailer, full video,
@@ -151,8 +162,17 @@ src/
   telenovelas), plus Featured & Trending, Continue Watching, Recently Viewed,
   and Recommended For You rows, and a genre filter + sort (trending/newest/
   top rated/title) control over the full catalog
-- Watch page with watermark overlay, star ratings, and an "Add to Watchlist"
-  (favorite) toggle; watch progress is recorded for Continue Watching
+- Each horizontal row shows an "Explore more" link/card that opens a full
+  listing page for that row/genre (`pages/user/CategoryPage.tsx`,
+  `utils/collections.ts`)
+- Site-wide search from the Navbar (title, description, and genre match),
+  with results shown on a dedicated page (`pages/user/SearchPage.tsx`)
+- Movie cards and the detail page show how many people have watched each
+  title (`ContentCard`, `utils/analytics.ts#getMostWatched`)
+- Watch page with watermark overlay, star ratings, an "Add to Watchlist"
+  (favorite) toggle, a watch count, and "More like this" (related, same
+  category) and "Recommended For You" rows; watch progress is recorded for
+  Continue Watching
 - Trailers page: search any title and preview its trailer
   (`pages/user/TrailersPage.tsx`)
 - My Watchlist / My Requests page: movies requested, movies uploaded to

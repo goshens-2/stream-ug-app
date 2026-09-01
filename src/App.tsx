@@ -7,6 +7,8 @@ import { LandingPage } from './pages/landing/LandingPage';
 import { LoginPage } from './pages/auth/LoginPage';
 import { SignupPage } from './pages/auth/SignupPage';
 import { HomePage } from './pages/user/HomePage';
+import { CategoryPage } from './pages/user/CategoryPage';
+import { SearchPage } from './pages/user/SearchPage';
 import { ContentDetailPage } from './pages/user/ContentDetailPage';
 import { MovieRequestPage } from './pages/user/MovieRequestPage';
 import { TrailersPage } from './pages/user/TrailersPage';
@@ -31,6 +33,8 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/browse" element={<UserLayout />}>
               <Route index element={<HomePage />} />
+              <Route path="category/:categoryId" element={<CategoryPage />} />
+              <Route path="search" element={<SearchPage />} />
               <Route path="watch/:contentId" element={<ContentDetailPage />} />
               <Route path="requests" element={<MovieRequestPage />} />
               <Route path="trailers" element={<TrailersPage />} />

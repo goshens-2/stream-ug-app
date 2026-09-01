@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppState } from '../context/AppStateContext';
 import './Navbar.css';
 
@@ -7,10 +7,19 @@ import './Navbar.css';
 export function Navbar() {
   const { currentUser, logout, notifications, markNotificationRead } = useAppState();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') ?? '');
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
+
+  const handleSearchSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    const trimmed = searchQuery.trim();
+    if (!trimmed) return;
+    navigate(`/browse/search?q=${encodeURIComponent(trimmed)}`);
+  };
 
   const myNotifications = notifications.filter((n) => n.userId === currentUser?.id);
   const unreadCount = myNotifications.filter((n) => !n.read).length;
@@ -42,6 +51,18 @@ export function Navbar() {
         <NavLink to="/browse/requests">Request a Movie</NavLink>
         {currentUser?.isAdmin && <NavLink to="/admin">Admin Panel</NavLink>}
       </nav>
+      <form className="navbar__search" onSubmit={handleSearchSubmit} role="search">
+        <input
+          type="search"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search movies, shows, genres…"
+          aria-label="Search"
+        />
+        <button type="submit" aria-label="Submit search">
+          🔍
+        </button>
+      </form>
       <div className="navbar__account">
         <div className="navbar__notif" ref={notifRef}>
           <button
