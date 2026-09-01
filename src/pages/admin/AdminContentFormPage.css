@@ -1,0 +1,54 @@
+.admin-content-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  max-width: 480px;
+}
+
+.admin-content-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+}
+
+.admin-content-form input,
+.admin-content-form select,
+.admin-content-form textarea {
+  background: #1c1c1c;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 0.5rem;
+  color: #f5f5f5;
+}
+
+.admin-content-form__row {
+  display: flex;
+  gap: 1rem;
+}
+
+.admin-content-form__watermark {
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.admin-content-form__checkbox {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.5rem !important;
+}
+
+.admin-content-form button {
+  align-self: flex-start;
+  background: #e50914;
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+}

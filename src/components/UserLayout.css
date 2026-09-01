@@ -1,0 +1,11 @@
+.user-layout {
+  min-height: 100vh;
+  background: #0f0f0f;
+  color: #f5f5f5;
+}
+
+.user-layout__main {
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}

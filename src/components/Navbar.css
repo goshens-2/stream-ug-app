@@ -1,0 +1,46 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem 1.5rem;
+  background: #141414;
+  border-bottom: 1px solid #262626;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.navbar__brand {
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: #e50914;
+  text-decoration: none;
+  letter-spacing: 0.03em;
+}
+
+.navbar__links {
+  display: flex;
+  gap: 1rem;
+  flex: 1;
+}
+
+.navbar__links a {
+  color: #d0d0d0;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.navbar__links a.active {
+  color: #fff;
+  font-weight: 600;
+}
+
+.navbar__subscribe {
+  background: #e50914;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+}

@@ -1,0 +1,16 @@
+.category-row {
+  margin: 1.5rem 0;
+}
+
+.category-row__title {
+  font-size: 1.1rem;
+  margin: 0 0 0.6rem;
+  color: #f5f5f5;
+}
+
+.category-row__items {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
