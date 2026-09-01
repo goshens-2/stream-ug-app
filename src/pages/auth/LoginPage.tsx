@@ -18,7 +18,7 @@ export function LoginPage() {
 
   if (isAuthenticated) {
     const from = (location.state as { from?: { pathname?: string } } | null)?.from;
-    return <Navigate to={from?.pathname ?? '/'} replace />;
+    return <Navigate to={from?.pathname ?? '/browse'} replace />;
   }
 
   const handleSubmit = (event: FormEvent) => {
@@ -29,7 +29,7 @@ export function LoginPage() {
       return;
     }
     setError(null);
-    navigate('/', { replace: true });
+    navigate('/browse', { replace: true });
   };
 
   return (

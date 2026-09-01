@@ -58,3 +58,24 @@
   padding: 1.5rem 2rem;
   max-width: 960px;
 }
+
+@media (max-width: 720px) {
+  .admin-layout {
+    flex-direction: column;
+  }
+
+  .admin-layout__sidebar {
+    width: auto;
+    border-right: none;
+    border-bottom: 1px solid #262626;
+  }
+
+  .admin-layout__nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .admin-layout__main {
+    padding: 1.25rem;
+  }
+}

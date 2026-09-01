@@ -20,7 +20,7 @@ export function AdminLayout() {
           <NavLink to="/admin/content-types">Content Types</NavLink>
           <NavLink to="/admin/categories">Categories</NavLink>
           <NavLink to="/admin/requests">Movie Requests</NavLink>
-          <NavLink to="/">Back to User Panel</NavLink>
+          <NavLink to="/browse">Back to User Panel</NavLink>
           <button type="button" className="admin-layout__logout" onClick={logout}>
             Log Out
           </button>

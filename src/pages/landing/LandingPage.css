@@ -1,0 +1,136 @@
+.landing-page {
+  min-height: 100vh;
+  background: #0f0f0f;
+  color: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+}
+
+.landing-page__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #262626;
+}
+
+.landing-page__brand {
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: #e50914;
+  letter-spacing: 0.03em;
+}
+
+.landing-page__nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.landing-page__nav-links a {
+  color: #d0d0d0;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.landing-page__cta-small {
+  background: #e50914;
+  color: #fff !important;
+  padding: 0.45rem 0.9rem;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.landing-page__hero {
+  flex: 1;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem 3rem;
+  text-align: center;
+}
+
+.landing-page__hero h1 {
+  font-size: 2.2rem;
+  line-height: 1.2;
+  margin: 0 0 1rem;
+}
+
+.landing-page__hero p {
+  color: #c9c9c9;
+  line-height: 1.5;
+}
+
+.landing-page__actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin: 1.5rem 0;
+  flex-wrap: wrap;
+}
+
+.landing-page__cta,
+.landing-page__cta-secondary {
+  padding: 0.7rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.landing-page__cta {
+  background: #e50914;
+  color: #fff;
+}
+
+.landing-page__cta-secondary {
+  background: transparent;
+  border: 1px solid #444;
+  color: #f5f5f5;
+}
+
+.landing-page__hint {
+  font-size: 0.85rem;
+  color: #999;
+}
+
+.landing-page__panels {
+  display: flex;
+  gap: 1.5rem;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 1.5rem 3rem;
+  flex-wrap: wrap;
+}
+
+.landing-page__panel {
+  flex: 1 1 280px;
+  background: #1c1c1c;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.landing-page__panel h2 {
+  margin-top: 0;
+  color: #e50914;
+  font-size: 1.1rem;
+}
+
+.landing-page__footer {
+  text-align: center;
+  padding: 1.5rem;
+  border-top: 1px solid #262626;
+  color: #888;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 600px) {
+  .landing-page__hero h1 {
+    font-size: 1.6rem;
+  }
+
+  .landing-page__nav {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+}

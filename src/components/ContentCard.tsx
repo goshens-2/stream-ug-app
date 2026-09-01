@@ -9,7 +9,7 @@ interface ContentCardProps {
 
 export function ContentCard({ content, averageRating }: ContentCardProps) {
   return (
-    <Link to={`/watch/${content.id}`} className="content-card">
+    <Link to={`/browse/watch/${content.id}`} className="content-card">
       <img src={content.posterUrl} alt={content.title} className="content-card__poster" />
       <div className="content-card__body">
         <h3 className="content-card__title">{content.title}</h3>

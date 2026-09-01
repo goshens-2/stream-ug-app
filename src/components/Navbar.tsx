@@ -8,14 +8,14 @@ export function Navbar() {
 
   return (
     <header className="navbar">
-      <NavLink to="/" className="navbar__brand">
+      <NavLink to="/browse" className="navbar__brand">
         STREAM UG
       </NavLink>
       <nav className="navbar__links">
-        <NavLink to="/" end>
-          Home
+        <NavLink to="/browse" end>
+          Browse
         </NavLink>
-        <NavLink to="/requests">Request a Movie</NavLink>
+        <NavLink to="/browse/requests">Request a Movie</NavLink>
         <NavLink to="/admin">Admin Panel</NavLink>
       </nav>
       <div className="navbar__account">
