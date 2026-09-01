@@ -81,6 +81,12 @@ export interface User {
   email: string;
   isSubscribed: boolean;
   subscription?: Subscription;
+  /**
+   * Whether this user has Admin Panel access. Backed by the `is_admin`
+   * column on `public.profiles` (see `supabase/schema.sql`); enforced both
+   * client-side (hiding nav/routes) and via Supabase RLS policies.
+   */
+  isAdmin?: boolean;
 }
 
 /** A recommendation produced for a user by the recommendation engine scaffold. */

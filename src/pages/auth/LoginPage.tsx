@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAppState } from '../../context/AppStateContext';
+import { isSupabaseConfigured } from '../../lib/supabaseClient';
 import './AuthPage.css';
 
 /**
@@ -15,15 +16,18 @@ export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   if (isAuthenticated) {
     const from = (location.state as { from?: { pathname?: string } } | null)?.from;
     return <Navigate to={from?.pathname ?? '/browse'} replace />;
   }
 
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    const result = login(email, password);
+    setSubmitting(true);
+    const result = await login(email, password);
+    setSubmitting(false);
     if (!result.success) {
       setError(result.error ?? 'Unable to log in.');
       return;
@@ -57,12 +61,16 @@ export function LoginPage() {
           />
         </label>
         {error && <p className="auth-page__error">{error}</p>}
-        <button type="submit">Log In</button>
+        <button type="submit" disabled={submitting}>
+          {submitting ? 'Logging In…' : 'Log In'}
+        </button>
       </form>
-      <p className="auth-page__hint">
-        Tip: you can log in with your own password, or with a shared password from a
-        subscriber who has added you to their family-share plan.
-      </p>
+      {!isSupabaseConfigured && (
+        <p className="auth-page__hint">
+          Tip: you can log in with your own password, or with a shared password from a
+          subscriber who has added you to their family-share plan.
+        </p>
+      )}
       <p className="auth-page__switch">
         Don't have an account? <Link to="/signup">Sign up</Link>
       </p>

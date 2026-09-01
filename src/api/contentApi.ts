@@ -19,6 +19,21 @@ export async function fetchContents(): Promise<Content[]> {
   return (data as ContentRow[]).map(mapContentRow);
 }
 
+/**
+ * Inserts a new content row, letting the database generate its `id` and
+ * timestamps (see `supabase/schema.sql`), and returns the created row mapped
+ * back to the app's `Content` shape. When Supabase isn't configured, this
+ * simply returns `content` unchanged so the mock-data fallback still works.
+ */
+export async function insertContent(content: Content): Promise<Content> {
+  if (!isSupabaseConfigured) return content;
+
+  const { id: _id, ...rest } = mapContentToRow(content);
+  const { data, error } = await supabase.from('content').insert(rest).select().single();
+  if (error) throw error;
+  return mapContentRow(data as ContentRow);
+}
+
 export async function upsertContent(content: Content): Promise<void> {
   if (!isSupabaseConfigured) return;
 

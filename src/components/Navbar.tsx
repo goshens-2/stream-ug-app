@@ -16,7 +16,7 @@ export function Navbar() {
           Browse
         </NavLink>
         <NavLink to="/browse/requests">Request a Movie</NavLink>
-        <NavLink to="/admin">Admin Panel</NavLink>
+        {currentUser?.isAdmin && <NavLink to="/admin">Admin Panel</NavLink>}
       </nav>
       <div className="navbar__account">
         <span className="navbar__status">

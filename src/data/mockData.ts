@@ -279,6 +279,7 @@ export const users: User[] = [
     name: 'Aisha Namutebi',
     email: 'aisha@example.com',
     isSubscribed: true,
+    isAdmin: true,
     subscription: {
       id: 'sub-1',
       plan: 'family-share',
