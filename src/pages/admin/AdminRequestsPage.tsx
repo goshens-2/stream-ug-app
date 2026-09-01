@@ -5,7 +5,7 @@ const statuses: MovieRequest['status'][] = ['pending', 'approved', 'rejected', '
 
 /** Admin view of movie requests submitted by users, with status management. */
 export function AdminRequestsPage() {
-  const { movieRequests, updateMovieRequestStatus } = useAppState();
+  const { movieRequests, updateMovieRequestStatus, contents } = useAppState();
 
   return (
     <div>
@@ -22,7 +22,11 @@ export function AdminRequestsPage() {
                 <select
                   value={request.status}
                   onChange={(e) =>
-                    updateMovieRequestStatus(request.id, e.target.value as MovieRequest['status'])
+                    updateMovieRequestStatus(
+                      request.id,
+                      e.target.value as MovieRequest['status'],
+                      request.fulfilledContentId,
+                    )
                   }
                 >
                   {statuses.map((status) => (
@@ -31,7 +35,28 @@ export function AdminRequestsPage() {
                     </option>
                   ))}
                 </select>
+              </label>{' '}
+              <label>
+                Fulfilled by:{' '}
+                <select
+                  value={request.fulfilledContentId ?? ''}
+                  onChange={(e) =>
+                    updateMovieRequestStatus(
+                      request.id,
+                      e.target.value ? 'fulfilled' : request.status,
+                      e.target.value || undefined,
+                    )
+                  }
+                >
+                  <option value="">— select uploaded content —</option>
+                  {contents.map((content) => (
+                    <option key={content.id} value={content.id}>
+                      {content.title}
+                    </option>
+                  ))}
+                </select>
               </label>
+              {request.fulfilledContentId && <span> ✅ linked</span>}
             </div>
           </li>
         ))}

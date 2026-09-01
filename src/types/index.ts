@@ -63,10 +63,62 @@ export interface MovieRequest {
   requestedBy: string;
   status: MovieRequestStatus;
   createdAt: string;
+  /**
+   * When an admin fulfills a request by uploading matching content, this
+   * links the request to that `Content` so the requester can find it from
+   * "My Watchlist" and receives a notification.
+   */
+  fulfilledContentId?: string;
+}
+
+/** A user's saved/favorited content, shown on the "My Watchlist" page. */
+export interface Favorite {
+  id: string;
+  userId: string;
+  contentId: string;
+  createdAt: string;
+}
+
+/**
+ * Tracks that a user viewed a piece of content, powering "Continue Watching"
+ * and "Recently Viewed". `progressSeconds`/`durationSeconds` are best-effort
+ * (from the HTML5 video element) and used to compute a completion ratio.
+ */
+export interface ViewHistoryEntry {
+  id: string;
+  userId: string;
+  contentId: string;
+  progressSeconds: number;
+  durationSeconds: number;
+  updatedAt: string;
+}
+
+/** A search query a user ran, used to power "most searched movie" analytics. */
+export interface SearchLogEntry {
+  id: string;
+  userId?: string;
+  query: string;
+  /** The content the search best matched, if any, for analytics grouping. */
+  matchedContentId?: string;
+  createdAt: string;
+}
+
+/** An in-app notification for a user, e.g. a requested movie becoming available. */
+export type NotificationType = 'request_fulfilled' | 'recommendation' | 'system';
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  message: string;
+  contentId?: string;
+  read: boolean;
+  createdAt: string;
 }
 
 export interface User {
   id: string;
+  /** The user's chosen username (collected at signup instead of a "full name"). */
   name: string;
   email: string;
   /**

@@ -7,6 +7,29 @@
   font-size: 0.85rem;
 }
 
+.content-detail__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.content-detail__heading h1 {
+  margin: 0;
+}
+
+.content-detail__favorite {
+  background: transparent;
+  border: 1px solid #e50914;
+  color: #e50914;
+  padding: 0.4rem 0.9rem;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
 .content-detail__meta {
   color: #a0a0a0;
   font-size: 0.9rem;

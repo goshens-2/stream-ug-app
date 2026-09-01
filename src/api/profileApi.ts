@@ -37,3 +37,29 @@ export async function fetchProfile(userId: string): Promise<User | null> {
     isAdmin: profileRow.is_admin,
   };
 }
+
+/** Updates the signed-in user's username (`profiles.name`). */
+export async function updateProfileName(userId: string, name: string): Promise<void> {
+  const { error } = await supabase.from('profiles').update({ name }).eq('id', userId);
+  if (error) throw error;
+}
+
+/** Changes the signed-in user's password via Supabase Auth. */
+export async function updateAuthPassword(password: string): Promise<void> {
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw error;
+}
+
+/**
+ * Best-effort account deletion for the signed-in user. The anon/publishable
+ * key used by the frontend cannot delete `auth.users` rows (that requires a
+ * service-role key), so this deletes the user's own `profiles` row (which
+ * requires the `"Users can delete their own profile"` RLS policy in
+ * `supabase/schema.sql`) and then signs them out. A backend job/admin should
+ * periodically purge orphaned `auth.users` rows with no matching profile.
+ */
+export async function deleteOwnProfile(userId: string): Promise<void> {
+  const { error } = await supabase.from('profiles').delete().eq('id', userId);
+  if (error) throw error;
+}
+
