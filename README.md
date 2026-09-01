@@ -26,6 +26,9 @@ The app can run entirely on mock data, or connect to a real
 2. In your Supabase project dashboard, go to **Project Settings → API** and
    copy the **Project URL** and **anon public** (or **publishable**) key into
    `.env` as `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
+   `VITE_SUPABASE_URL` must be the **base project URL**
+   (e.g. `https://xxxxxxxx.supabase.co`) — do **not** append `/rest/v1/` or
+   any other API path to it; the Supabase client library adds that itself.
 3. Run the starter schema in `supabase/schema.sql` (Supabase SQL editor or
    CLI) to create the `profiles`, `subscriptions`, `content_types`,
    `categories`, `content`, `movie_requests`, and `ratings` tables, RLS

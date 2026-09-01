@@ -8,8 +8,29 @@
  */
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const rawSupabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+/**
+ * Normalize a Supabase URL by stripping any API path (e.g. `/rest/v1`) that
+ * may have been mistakenly copied along with the project URL. The Supabase
+ * client library expects the bare project URL and adds API paths itself.
+ */
+function normalizeSupabaseUrl(url: string | undefined): string | undefined {
+  if (!url) return url;
+  const match = url.match(/^https?:\/\/[^/]+/);
+  return match ? match[0] : url;
+}
+
+const supabaseUrl = normalizeSupabaseUrl(rawSupabaseUrl);
+
+if (rawSupabaseUrl && supabaseUrl && rawSupabaseUrl !== supabaseUrl) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    `VITE_SUPABASE_URL should be the base project URL (e.g. ${supabaseUrl}), ` +
+      `not an API path like "${rawSupabaseUrl}". Using "${supabaseUrl}" instead.`,
+  );
+}
 
 if (!supabaseUrl || !supabaseAnonKey) {
   // eslint-disable-next-line no-console
