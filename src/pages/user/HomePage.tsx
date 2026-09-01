@@ -55,6 +55,28 @@ export function HomePage() {
       .slice(0, 8);
   }, [contents, viewHistory, ratings]);
 
+  const recentlyAdded = useMemo(
+    () =>
+      contents
+        .slice()
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 8),
+    [contents],
+  );
+
+  const popular = useMemo(() => {
+    const watchCounts = new Map(getMostWatched(viewHistory).map((c) => [c.contentId, c.count]));
+    return contents
+      .slice()
+      .sort((a, b) => (watchCounts.get(b.id) ?? 0) - (watchCounts.get(a.id) ?? 0))
+      .slice(0, 8);
+  }, [contents, viewHistory]);
+
+  const watchCountMap = useMemo(
+    () => new Map(getMostWatched(viewHistory).map((c) => [c.contentId, c.count])),
+    [viewHistory],
+  );
+
   const filteredAndSorted = useMemo(() => {
     let list: Content[] = genreFilter === 'all' ? contents : contents.filter((c) => c.categoryId === genreFilter);
     list = list.slice();
@@ -93,6 +115,7 @@ export function HomePage() {
         <CategoryRow
           category={{ id: 'featured', name: 'Featured & Trending', slug: 'featured' }}
           contents={featuredAndTrending}
+          exploreId="trending"
         />
       )}
 
@@ -100,6 +123,7 @@ export function HomePage() {
         <CategoryRow
           category={{ id: 'continue-watching', name: 'Continue Watching', slug: 'continue-watching' }}
           contents={continueWatching}
+          exploreId="continue-watching"
         />
       )}
 
@@ -107,6 +131,7 @@ export function HomePage() {
         <CategoryRow
           category={{ id: 'recommended', name: 'Recommended For You', slug: 'recommended' }}
           contents={recommendedContent}
+          exploreId="recommended"
         />
       )}
 
@@ -114,14 +139,28 @@ export function HomePage() {
         <CategoryRow
           category={{ id: 'recently-viewed', name: 'Recently Viewed', slug: 'recently-viewed' }}
           contents={recentlyViewed}
+          exploreId="recently-viewed"
         />
       )}
+
+      <CategoryRow
+        category={{ id: 'recently-added', name: 'Recently Added', slug: 'recently-added' }}
+        contents={recentlyAdded}
+        exploreId="recently-added"
+      />
+
+      <CategoryRow
+        category={{ id: 'popular', name: 'Popular', slug: 'popular' }}
+        contents={popular}
+        exploreId="popular"
+      />
 
       {categories.map((category) => (
         <CategoryRow
           key={category.id}
           category={category}
           contents={contents.filter((c) => c.categoryId === category.id)}
+          exploreId={category.id}
         />
       ))}
 
@@ -153,7 +192,12 @@ export function HomePage() {
         </div>
         <div className="home-page__browse-all-grid">
           {filteredAndSorted.map((content) => (
-            <ContentCard key={content.id} content={content} averageRating={getAverageRating(content.id, ratings)} />
+            <ContentCard
+              key={content.id}
+              content={content}
+              averageRating={getAverageRating(content.id, ratings)}
+              watchCount={watchCountMap.get(content.id) ?? 0}
+            />
           ))}
         </div>
       </section>

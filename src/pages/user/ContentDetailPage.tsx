@@ -1,9 +1,12 @@
 import { useParams, Link } from 'react-router-dom';
 import type { SyntheticEvent } from 'react';
+import { useMemo } from 'react';
 import { useAppState } from '../../context/AppStateContext';
 import { WatermarkedVideo } from '../../components/WatermarkedVideo';
 import { RatingStars } from '../../components/RatingStars';
+import { CategoryRow } from '../../components/CategoryRow';
 import { getAverageRating } from '../../utils/recommendations';
+import { getMostWatched } from '../../utils/analytics';
 import './ContentDetailPage.css';
 
 /** Watch page for a single piece of content: player, details, and rating. */
@@ -14,6 +17,7 @@ export function ContentDetailPage() {
     categories,
     contentTypes,
     ratings,
+    viewHistory,
     currentUser,
     rateContent,
     isFavorite,
@@ -23,6 +27,11 @@ export function ContentDetailPage() {
     useAppState();
 
   const content = contents.find((c) => c.id === contentId);
+
+  const relatedContent = useMemo(() => {
+    if (!content) return [];
+    return contents.filter((c) => c.categoryId === content.categoryId && c.id !== content.id).slice(0, 10);
+  }, [content, contents]);
 
   if (!content) {
     return (
@@ -40,6 +49,7 @@ export function ContentDetailPage() {
   )?.score ?? 0;
   const averageRating = getAverageRating(content.id, ratings);
   const favorited = isFavorite(content.id);
+  const watchCount = getMostWatched(viewHistory).find((c) => c.contentId === content.id)?.count ?? 0;
 
   const handleTimeUpdate = (event: SyntheticEvent<HTMLVideoElement>) => {
     const video = event.currentTarget;
@@ -68,7 +78,7 @@ export function ContentDetailPage() {
       </div>
       <p className="content-detail__meta">
         {contentType?.name} &middot; {category?.name} &middot; {content.releaseYear} &middot;{' '}
-        {content.durationMinutes}m
+        {content.durationMinutes}m &middot; 👁 {watchCount} view{watchCount === 1 ? '' : 's'}
       </p>
       <p>{content.description}</p>
 
@@ -79,6 +89,11 @@ export function ContentDetailPage() {
           <span className="content-detail__average">Average: {averageRating.toFixed(1)} / 5</span>
         )}
       </div>
+
+      {relatedContent.length > 0 && category && (
+        <CategoryRow category={{ ...category, name: `More ${category.name}` }} contents={relatedContent} />
+      )}
     </div>
   );
 }
+

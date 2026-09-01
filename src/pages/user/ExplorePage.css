@@ -1,0 +1,28 @@
+.explore-page__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.explore-page__back {
+  font-size: 0.85rem;
+  color: #f5c518;
+  text-decoration: none;
+}
+
+.explore-page__back:hover {
+  text-decoration: underline;
+}
+
+.explore-page__empty {
+  color: #a0a0a0;
+}
+
+.explore-page__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+}

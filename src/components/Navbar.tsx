@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import type { FormEvent } from 'react';
 import { useAppState } from '../context/AppStateContext';
 import './Navbar.css';
 
@@ -9,11 +10,18 @@ export function Navbar() {
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const profileRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
   const myNotifications = notifications.filter((n) => n.userId === currentUser?.id);
   const unreadCount = myNotifications.filter((n) => !n.read).length;
+
+  const handleSearchSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    const trimmed = searchQuery.trim();
+    navigate(`/browse/search${trimmed ? `?q=${encodeURIComponent(trimmed)}` : ''}`);
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -42,6 +50,18 @@ export function Navbar() {
         <NavLink to="/browse/requests">Request a Movie</NavLink>
         {currentUser?.isAdmin && <NavLink to="/admin">Admin Panel</NavLink>}
       </nav>
+      <form className="navbar__search" onSubmit={handleSearchSubmit} role="search">
+        <input
+          type="search"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search movies…"
+          aria-label="Search movies"
+        />
+        <button type="submit" aria-label="Search">
+          🔎
+        </button>
+      </form>
       <div className="navbar__account">
         <div className="navbar__notif" ref={notifRef}>
           <button

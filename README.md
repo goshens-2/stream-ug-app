@@ -99,9 +99,12 @@ src/
   pages/user/              User Panel web pages (mounted under `/browse`):
                           Browse (category rows, trailer marquee, genre
                           filter/sort, continue watching, recently viewed,
-                          featured & trending), Content detail/watch page,
-                          Movie request form, Trailers search page, My
-                          Watchlist (requests/uploaded-for-me/recommended/
+                          featured & trending), Explore page (fuller listing
+                          for a row's "Explore more" link), Search page
+                          (global navbar search), Content detail/watch page
+                          (incl. related titles), Movie request form,
+                          Trailers search page, My Watchlist
+                          (requests/uploaded-for-me/recommended/
                           favorites), Account Settings (username/password/
                           delete account)
   pages/admin/             Admin Panel web pages (mounted under `/admin`):
@@ -120,7 +123,9 @@ src/
 | `/login`                         | public             | Login                                   |
 | `/signup`                        | public             | Signup (username, email, password)      |
 | `/browse`                        | signed-in          | User Panel: browse content              |
-| `/browse/watch/:contentId`       | signed-in          | User Panel: watch/content detail        |
+| `/browse/watch/:contentId`       | signed-in          | User Panel: watch/content detail (incl. related titles) |
+| `/browse/explore/:id`            | signed-in          | User Panel: full listing for a row's "Explore more" (category id or trending/popular/recently-added/recommended/continue-watching/recently-viewed) |
+| `/browse/search`                 | signed-in          | User Panel: global search results (navbar search box) |
 | `/browse/requests`               | signed-in          | User Panel: submit a movie request      |
 | `/browse/trailers`               | signed-in          | User Panel: search & preview trailers   |
 | `/browse/watchlist`              | signed-in          | User Panel: My Watchlist / My Requests  |
@@ -148,11 +153,18 @@ src/
   (translated movies, local music/audio, comedy, cartoons, sports & football
   analysis, non-translated movies, anime, campus entertainment, local
   soaps/series, news, talk shows, Nigerian/Indian/Korean/Chinese movies,
-  telenovelas), plus Featured & Trending, Continue Watching, Recently Viewed,
-  and Recommended For You rows, and a genre filter + sort (trending/newest/
-  top rated/title) control over the full catalog
-- Watch page with watermark overlay, star ratings, and an "Add to Watchlist"
-  (favorite) toggle; watch progress is recorded for Continue Watching
+  telenovelas), plus Featured & Trending, Popular, Recently Added, Continue
+  Watching, Recently Viewed, and Recommended For You rows, and a genre filter
+  + sort (trending/newest/top rated/title) control over the full catalog
+- Every row has an "Explore more" link to a fuller listing page
+  (`pages/user/ExplorePage.tsx`), and every movie card shows a user-visible
+  watch count
+- Global search from the navbar (`/browse/search`), plus genre filtering on
+  the results (`pages/user/SearchPage.tsx`)
+- Watch page with watermark overlay, star ratings, an "Add to Watchlist"
+  (favorite) toggle, and a "More <category>" related-titles row; watch
+  progress is recorded for Continue Watching and the watch count shown to
+  users
 - Trailers page: search any title and preview its trailer
   (`pages/user/TrailersPage.tsx`)
 - My Watchlist / My Requests page: movies requested, movies uploaded to
