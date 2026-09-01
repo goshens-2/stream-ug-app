@@ -3,6 +3,7 @@ import { AppStateProvider } from './context/AppStateContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { UserLayout } from './components/UserLayout';
 import { AdminLayout } from './components/AdminLayout';
+import { LandingPage } from './pages/landing/LandingPage';
 import { LoginPage } from './pages/auth/LoginPage';
 import { SignupPage } from './pages/auth/SignupPage';
 import { HomePage } from './pages/user/HomePage';
@@ -20,10 +21,11 @@ function App() {
     <AppStateProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route element={<ProtectedRoute />}>
-            <Route element={<UserLayout />}>
+            <Route path="/browse" element={<UserLayout />}>
               <Route index element={<HomePage />} />
               <Route path="watch/:contentId" element={<ContentDetailPage />} />
               <Route path="requests" element={<MovieRequestPage />} />

@@ -33,14 +33,30 @@ src/
   components/             Shared UI: Navbar, layouts, ContentCard, CategoryRow,
                           WatermarkedVideo, TrailerMarquee (autoplay-on-scroll),
                           RatingStars, AdBanner
-  pages/user/              User Panel pages: Home (category rows, trailer
-                          marquee, ads), Content detail/watch page, Movie
-                          request form
-  pages/admin/             Admin Panel pages: Dashboard, Content list,
-                          Content upload/edit form (incl. watermark settings),
-                          Content Types manager, Categories view, Movie
-                          requests review
+  pages/landing/           Public Home/Landing page shown to signed-out
+                          visitors at `/`, with links to Login and Signup
+  pages/auth/              Login (`/login`) and Signup (`/signup`) pages,
+                          including shared-password/family-share login
+  pages/user/              User Panel web pages (mounted under `/browse`):
+                          Browse (category rows, trailer marquee, ads),
+                          Content detail/watch page, Movie request form
+  pages/admin/             Admin Panel web pages (mounted under `/admin`):
+                          Dashboard, Content list, Content upload/edit form
+                          (incl. watermark settings), Content Types manager,
+                          Categories view, Movie requests review
 ```
+
+## Routes
+
+| Route                          | Access             | Page                                   |
+| ------------------------------- | ------------------ | --------------------------------------- |
+| `/`                              | public             | Home / landing page                     |
+| `/login`                         | public             | Login (own password or shared password) |
+| `/signup`                        | public             | Signup                                  |
+| `/browse`                        | signed-in          | User Panel: browse content              |
+| `/browse/watch/:contentId`       | signed-in          | User Panel: watch/content detail        |
+| `/browse/requests`               | signed-in          | User Panel: submit a movie request      |
+| `/admin`, `/admin/*`             | signed-in          | Admin Panel dashboard & management pages |
 
 ## Feature coverage
 

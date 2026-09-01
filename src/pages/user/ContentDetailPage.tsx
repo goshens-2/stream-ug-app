@@ -18,7 +18,7 @@ export function ContentDetailPage() {
     return (
       <div className="content-detail">
         <p>Content not found.</p>
-        <Link to="/">Back to home</Link>
+        <Link to="/browse">Back to browse</Link>
       </div>
     );
   }
@@ -40,7 +40,7 @@ export function ContentDetailPage() {
       />
       {!isSubscribed && (
         <p className="content-detail__hint">
-          Playing trailer preview only. <Link to="/">Subscribe</Link> to watch the full video.
+          Playing trailer preview only. <Link to="/browse">Subscribe</Link> to watch the full video.
         </p>
       )}
       <h1>{content.title}</h1>

@@ -15,7 +15,7 @@ export function SignupPage() {
   const [error, setError] = useState<string | null>(null);
 
   if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/browse" replace />;
   }
 
   const handleSubmit = (event: FormEvent) => {
@@ -30,7 +30,7 @@ export function SignupPage() {
       return;
     }
     setError(null);
-    navigate('/', { replace: true });
+    navigate('/browse', { replace: true });
   };
 
   return (
