@@ -4,7 +4,7 @@ import './Navbar.css';
 
 /** Top navigation for the User Panel. */
 export function Navbar() {
-  const { isSubscribed, currentUser, session, logout } = useAppState();
+  const { currentUser, logout } = useAppState();
 
   return (
     <header className="navbar">
@@ -19,12 +19,8 @@ export function Navbar() {
         {currentUser?.isAdmin && <NavLink to="/admin">Admin Panel</NavLink>}
       </nav>
       <div className="navbar__account">
-        <span className="navbar__status">
-          {isSubscribed ? 'Subscribed ✓' : 'Not Subscribed'}
-          {session?.isSharedAccess && ' (Shared Access)'}
-        </span>
         {currentUser && <span className="navbar__user">{currentUser.name}</span>}
-        <button type="button" className="navbar__subscribe" onClick={logout}>
+        <button type="button" className="navbar__logout" onClick={logout}>
           Log Out
         </button>
       </div>

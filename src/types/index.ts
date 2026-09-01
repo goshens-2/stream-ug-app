@@ -65,22 +65,10 @@ export interface MovieRequest {
   createdAt: string;
 }
 
-/** Subscription plan a user may be enrolled in (supports password sharing). */
-export interface Subscription {
-  id: string;
-  plan: 'free' | 'basic' | 'family-share' | 'premium';
-  isActive: boolean;
-  sharedWithUserIds: string[];
-  maxSharedUsers: number;
-  renewsAt: string;
-}
-
 export interface User {
   id: string;
   name: string;
   email: string;
-  isSubscribed: boolean;
-  subscription?: Subscription;
   /**
    * Whether this user has Admin Panel access. Backed by the `is_admin`
    * column on `public.profiles` (see `supabase/schema.sql`); enforced both
@@ -96,14 +84,6 @@ export interface Recommendation {
   reason: string;
 }
 
-/** An ad slot placeholder shown to non-subscribed users. */
-export interface Ad {
-  id: string;
-  title: string;
-  imageUrl: string;
-  targetUrl: string;
-}
-
 /**
  * A login credential linked to a `User`. This is a mock/in-memory stand-in for a
  * future backend auth table and is intentionally simple (plaintext password) since
@@ -117,15 +97,10 @@ export interface Account {
 }
 
 /**
- * The currently authenticated session. `isSharedAccess` is true when the user logged
- * in using another account's shared password (e.g. a family-share subscription)
- * rather than their own credentials. `grantedByUserId` identifies the subscriber
- * whose shared password was used, so the app can attribute/limit shared access.
+ * The currently authenticated session, holding the signed-in `User`.
  */
 export interface AuthSession {
   user: User;
-  isSharedAccess: boolean;
-  grantedByUserId?: string;
 }
 
 /** Result of an auth operation (login/signup), used to surface validation errors. */

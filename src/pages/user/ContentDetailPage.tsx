@@ -2,14 +2,13 @@ import { useParams, Link } from 'react-router-dom';
 import { useAppState } from '../../context/AppStateContext';
 import { WatermarkedVideo } from '../../components/WatermarkedVideo';
 import { RatingStars } from '../../components/RatingStars';
-import { AdBanner } from '../../components/AdBanner';
 import { getAverageRating } from '../../utils/recommendations';
 import './ContentDetailPage.css';
 
 /** Watch page for a single piece of content: player, details, and rating. */
 export function ContentDetailPage() {
   const { contentId } = useParams<{ contentId: string }>();
-  const { contents, categories, contentTypes, ratings, ads, isSubscribed, currentUser, rateContent } =
+  const { contents, categories, contentTypes, ratings, currentUser, rateContent } =
     useAppState();
 
   const content = contents.find((c) => c.id === contentId);
@@ -33,16 +32,11 @@ export function ContentDetailPage() {
   return (
     <div className="content-detail">
       <WatermarkedVideo
-        src={isSubscribed ? content.videoUrl : content.trailerUrl}
+        src={content.videoUrl}
         poster={content.posterUrl}
         watermark={content.watermark}
         controls
       />
-      {!isSubscribed && (
-        <p className="content-detail__hint">
-          Playing trailer preview only. <Link to="/browse">Subscribe</Link> to watch the full video.
-        </p>
-      )}
       <h1>{content.title}</h1>
       <p className="content-detail__meta">
         {contentType?.name} &middot; {category?.name} &middot; {content.releaseYear} &middot;{' '}
@@ -57,8 +51,6 @@ export function ContentDetailPage() {
           <span className="content-detail__average">Average: {averageRating.toFixed(1)} / 5</span>
         )}
       </div>
-
-      {!isSubscribed && ads[0] && <AdBanner ad={ads[0]} />}
     </div>
   );
 }

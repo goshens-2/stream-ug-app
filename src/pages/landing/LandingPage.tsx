@@ -42,9 +42,7 @@ export function LandingPage() {
           </Link>
         </div>
         <p className="landing-page__hint">
-          Already know someone with an account? You can log in with your own
-          password, or with a shared password from a subscriber's family-share
-          plan.
+          Already have an account? Log in to start watching.
         </p>
       </main>
 

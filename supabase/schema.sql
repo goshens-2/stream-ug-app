@@ -18,7 +18,6 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   name text not null,
   email text not null unique,
-  is_subscribed boolean not null default false,
   -- Trusted, database-backed admin flag. Only grant this via the Supabase
   -- dashboard/SQL editor (service_role) — never let the frontend set it.
   is_admin boolean not null default false,
@@ -63,9 +62,9 @@ as $$
   select coalesce((select is_admin from public.profiles where id = auth.uid()), false);
 $$;
 
--- Prevents a non-admin user from granting themselves admin access or
--- subscriber status through the "update their own profile" policy below —
--- `is_admin`/`is_subscribed` can only change via a service_role/admin update.
+-- Prevents a non-admin user from granting themselves admin access through
+-- the "update their own profile" policy below — `is_admin` can only change
+-- via a service_role/admin update.
 create or replace function public.protect_profile_privileges()
 returns trigger
 language plpgsql
@@ -74,7 +73,6 @@ as $$
 begin
   if not public.is_admin() then
     new.is_admin := old.is_admin;
-    new.is_subscribed := old.is_subscribed;
   end if;
   return new;
 end;
@@ -84,18 +82,6 @@ drop trigger if exists before_profile_update on public.profiles;
 create trigger before_profile_update
   before update on public.profiles
   for each row execute procedure public.protect_profile_privileges();
-
--- Subscriptions: plan + password-sharing state for a profile.
-create table if not exists public.subscriptions (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references public.profiles (id) on delete cascade,
-  plan text not null check (plan in ('free', 'basic', 'family-share', 'premium')),
-  is_active boolean not null default true,
-  shared_with_user_ids uuid[] not null default '{}',
-  max_shared_users integer not null default 0,
-  renews_at timestamptz,
-  created_at timestamptz not null default now()
-);
 
 -- Content types: Movie, Series, Music Video, Documentary, TV Show, ...
 create table if not exists public.content_types (
@@ -156,7 +142,6 @@ create table if not exists public.ratings (
 
 -- Row Level Security: enable and add sane starter policies.
 alter table public.profiles enable row level security;
-alter table public.subscriptions enable row level security;
 alter table public.content_types enable row level security;
 alter table public.categories enable row level security;
 alter table public.content enable row level security;
@@ -171,23 +156,13 @@ create policy "Categories are readable by authenticated users"
 create policy "Content is readable by authenticated users"
   on public.content for select to authenticated using (true);
 
--- Users can only see/manage their own profile, requests, ratings, subscription.
+-- Users can only see/manage their own profile, requests, and ratings.
 create policy "Users can view their own profile"
   on public.profiles for select using (auth.uid() = id);
 create policy "Users can update their own profile"
   on public.profiles for update using (auth.uid() = id);
 create policy "Admins can view all profiles"
   on public.profiles for select using (public.is_admin());
-
-create policy "Users can view their own subscription"
-  on public.subscriptions for select using (auth.uid() = user_id);
--- Needed so a logged-in user can tell whether *someone else's* active
--- subscription lists them under `shared_with_user_ids` (family-share access).
-create policy "Users can view subscriptions that share access with them"
-  on public.subscriptions for select
-  using (is_active and auth.uid() = any (shared_with_user_ids));
-create policy "Admins can view all subscriptions"
-  on public.subscriptions for select using (public.is_admin());
 
 create policy "Users can view their own requests"
   on public.movie_requests for select using (auth.uid() = requested_by);
