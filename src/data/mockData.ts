@@ -1,6 +1,5 @@
 import type {
   Account,
-  Ad,
   Category,
   Content,
   ContentType,
@@ -272,53 +271,23 @@ export const movieRequests: MovieRequest[] = [
   },
 ];
 
-/** Sample users, including one subscribed with password sharing enabled. */
+/** Sample users. */
 export const users: User[] = [
   {
     id: 'user-1',
     name: 'Aisha Namutebi',
     email: 'aisha@example.com',
-    isSubscribed: true,
     isAdmin: true,
-    subscription: {
-      id: 'sub-1',
-      plan: 'family-share',
-      isActive: true,
-      sharedWithUserIds: ['user-2'],
-      maxSharedUsers: 4,
-      renewsAt: now,
-    },
   },
   {
     id: 'user-2',
     name: 'Brian Okello',
     email: 'brian@example.com',
-    isSubscribed: false,
   },
 ];
 
-/**
- * Sample login credentials, one per user. `user-2` (Brian) is not subscribed himself,
- * but can log in using Aisha's password since her family-share plan lists him under
- * `sharedWithUserIds` — a demo of shared-password login.
- */
+/** Sample login credentials, one per user. */
 export const accounts: Account[] = [
   { id: 'acct-1', userId: 'user-1', email: 'aisha@example.com', password: 'password123' },
   { id: 'acct-2', userId: 'user-2', email: 'brian@example.com', password: 'brianpass' },
-];
-
-/** Sample ad placeholders shown to non-subscribed users. */
-export const ads: Ad[] = [
-  {
-    id: 'ad-1',
-    title: 'Upgrade to STREAM UG Premium',
-    imageUrl: posterFor('ad-premium'),
-    targetUrl: '#subscribe',
-  },
-  {
-    id: 'ad-2',
-    title: 'Local Telecom Data Bundles',
-    imageUrl: posterFor('ad-telecom'),
-    targetUrl: '#ad',
-  },
 ];

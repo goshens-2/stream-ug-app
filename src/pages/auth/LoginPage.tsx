@@ -2,12 +2,10 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAppState } from '../../context/AppStateContext';
-import { isSupabaseConfigured } from '../../lib/supabaseClient';
 import './AuthPage.css';
 
 /**
- * Login page. Supports logging in with a user's own password, or with a
- * shared password from a subscriber who has granted access (family-share).
+ * Login page.
  */
 export function LoginPage() {
   const { isAuthenticated, login } = useAppState();
@@ -56,7 +54,7 @@ export function LoginPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Your password or a shared password"
+            placeholder="Your password"
             required
           />
         </label>
@@ -65,12 +63,6 @@ export function LoginPage() {
           {submitting ? 'Logging In…' : 'Log In'}
         </button>
       </form>
-      {!isSupabaseConfigured && (
-        <p className="auth-page__hint">
-          Tip: you can log in with your own password, or with a shared password from a
-          subscriber who has added you to their family-share plan.
-        </p>
-      )}
       <p className="auth-page__switch">
         Don't have an account? <Link to="/signup">Sign up</Link>
       </p>

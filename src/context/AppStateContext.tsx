@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   accounts as initialAccounts,
-  ads as initialAds,
   categories as initialCategories,
   contentTypes as initialContentTypes,
   contents as initialContents,
@@ -17,7 +16,6 @@ import {
   fetchMovieRequests,
   fetchProfile,
   fetchRatings,
-  fetchSharedAccessGrantor,
   insertCategory,
   insertContent,
   insertContentType,
@@ -29,7 +27,6 @@ import {
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
 import type {
   Account,
-  Ad,
   AuthResult,
   AuthSession,
   Category,
@@ -53,13 +50,11 @@ interface AppState {
   contentTypes: ContentType[];
   movieRequests: MovieRequest[];
   ratings: Rating[];
-  ads: Ad[];
   users: User[];
   accounts: Account[];
   session: AuthSession | null;
   isAuthenticated: boolean;
   currentUser: User | null;
-  isSubscribed: boolean;
   /** True while the initial Supabase Auth session is being resolved on load. */
   authLoading: boolean;
   login: (email: string, password: string) => Promise<AuthResult>;
@@ -82,7 +77,6 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [contentTypes, setContentTypes] = useState<ContentType[]>(initialContentTypes);
   const [movieRequests, setMovieRequests] = useState<MovieRequest[]>(initialMovieRequests);
   const [ratings, setRatings] = useState<Rating[]>(initialRatings);
-  const [ads] = useState<Ad[]>(initialAds);
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [accounts, setAccounts] = useState<Account[]>(initialAccounts);
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -109,8 +103,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   // Auth: when Supabase is configured, hydrate the session from Supabase Auth
   // (instead of the mock `accounts`/`users` arrays) and keep it in sync via
-  // `onAuthStateChange`. The signed-in user's profile/subscription/shared-
-  // access state is loaded from the `profiles`/`subscriptions` tables.
+  // `onAuthStateChange`. The signed-in user's profile is loaded from the
+  // `profiles` table.
   useEffect(() => {
     if (!isSupabaseConfigured) return;
     let cancelled = false;
@@ -121,10 +115,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         return;
       }
       try {
-        const [profile, grantedByUserId] = await Promise.all([
-          fetchProfile(authUserId),
-          fetchSharedAccessGrantor(authUserId),
-        ]);
+        const profile = await fetchProfile(authUserId);
         if (cancelled) return;
         if (!profile) {
           // Auth succeeded but no profile row exists yet (e.g. the
@@ -132,11 +123,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           setSession(null);
           return;
         }
-        setSession(
-          grantedByUserId
-            ? { user: profile, isSharedAccess: true, grantedByUserId }
-            : { user: profile, isSharedAccess: false },
-        );
+        setSession({ user: profile });
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error('Failed to load Supabase profile for signed-in user:', err);
@@ -150,21 +137,18 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       });
     });
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       void hydrateSession(newSession?.user.id ?? null);
     });
 
     return () => {
       cancelled = true;
-      subscription.subscription.unsubscribe();
+      authListener.subscription.unsubscribe();
     };
   }, []);
 
   const currentUser = session?.user ?? null;
   const isAuthenticated = session !== null;
-  const isSubscribed = session
-    ? session.isSharedAccess || session.user.isSubscribed
-    : false;
 
   const login = async (email: string, password: string): Promise<AuthResult> => {
     if (isSupabaseConfigured) {
@@ -183,21 +167,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       return { success: false, error: 'That account is not linked to a valid user.' };
     }
     if (account.password === password) {
-      setSession({ user, isSharedAccess: false });
-      return { success: true };
-    }
-    // Shared-password login: someone else's password unlocks access if that other
-    // account's subscriber has actively shared their plan with this user.
-    const ownerAccount = accounts.find((other) => {
-      if (other.id === account.id || other.password !== password) return false;
-      const ownerUser = users.find((u) => u.id === other.userId);
-      return Boolean(
-        ownerUser?.subscription?.isActive &&
-          ownerUser.subscription.sharedWithUserIds.includes(user.id),
-      );
-    });
-    if (ownerAccount) {
-      setSession({ user, isSharedAccess: true, grantedByUserId: ownerAccount.userId });
+      setSession({ user });
       return { success: true };
     }
     return { success: false, error: 'Incorrect password.' };
@@ -228,7 +198,6 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       id,
       name: trimmedName,
       email: normalizedEmail,
-      isSubscribed: false,
     };
     const newAccount: Account = {
       id: `acct-${Date.now()}`,
@@ -238,7 +207,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     };
     setUsers((prev) => [...prev, newUser]);
     setAccounts((prev) => [...prev, newAccount]);
-    setSession({ user: newUser, isSharedAccess: false });
+    setSession({ user: newUser });
     return { success: true };
   };
 
@@ -256,13 +225,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     contentTypes,
     movieRequests,
     ratings,
-    ads,
     users,
     accounts,
     session,
     isAuthenticated,
     currentUser,
-    isSubscribed,
     authLoading,
     login,
     signup,
