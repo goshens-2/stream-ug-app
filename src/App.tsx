@@ -30,6 +30,8 @@ function App() {
               <Route path="watch/:contentId" element={<ContentDetailPage />} />
               <Route path="requests" element={<MovieRequestPage />} />
             </Route>
+          </Route>
+          <Route element={<ProtectedRoute requireAdmin />}>
             <Route path="admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboardPage />} />
               <Route path="content" element={<AdminContentListPage />} />

@@ -19,9 +19,71 @@ create table if not exists public.profiles (
   name text not null,
   email text not null unique,
   is_subscribed boolean not null default false,
+  -- Trusted, database-backed admin flag. Only grant this via the Supabase
+  -- dashboard/SQL editor (service_role) — never let the frontend set it.
+  is_admin boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Automatically create a `profiles` row whenever a new Supabase Auth user
+-- signs up, using the `name` passed in `options.data` on `supabase.auth.signUp`.
+-- This keeps profile creation server-side/trusted instead of relying on the
+-- client to insert its own profile row after signup.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.profiles (id, name, email)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data ->> 'name', split_part(new.email, '@', 1)),
+    new.email
+  )
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+
+-- Helper used by RLS policies below to check the caller's admin flag without
+-- recursively re-evaluating the `profiles` RLS policy for that lookup.
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer set search_path = public
+stable
+as $$
+  select coalesce((select is_admin from public.profiles where id = auth.uid()), false);
+$$;
+
+-- Prevents a non-admin user from granting themselves admin access or
+-- subscriber status through the "update their own profile" policy below —
+-- `is_admin`/`is_subscribed` can only change via a service_role/admin update.
+create or replace function public.protect_profile_privileges()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  if not public.is_admin() then
+    new.is_admin := old.is_admin;
+    new.is_subscribed := old.is_subscribed;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists before_profile_update on public.profiles;
+create trigger before_profile_update
+  before update on public.profiles
+  for each row execute procedure public.protect_profile_privileges();
 
 -- Subscriptions: plan + password-sharing state for a profile.
 create table if not exists public.subscriptions (
@@ -114,14 +176,27 @@ create policy "Users can view their own profile"
   on public.profiles for select using (auth.uid() = id);
 create policy "Users can update their own profile"
   on public.profiles for update using (auth.uid() = id);
+create policy "Admins can view all profiles"
+  on public.profiles for select using (public.is_admin());
 
 create policy "Users can view their own subscription"
   on public.subscriptions for select using (auth.uid() = user_id);
+-- Needed so a logged-in user can tell whether *someone else's* active
+-- subscription lists them under `shared_with_user_ids` (family-share access).
+create policy "Users can view subscriptions that share access with them"
+  on public.subscriptions for select
+  using (is_active and auth.uid() = any (shared_with_user_ids));
+create policy "Admins can view all subscriptions"
+  on public.subscriptions for select using (public.is_admin());
 
 create policy "Users can view their own requests"
   on public.movie_requests for select using (auth.uid() = requested_by);
 create policy "Users can create their own requests"
   on public.movie_requests for insert with check (auth.uid() = requested_by);
+create policy "Admins can view all requests"
+  on public.movie_requests for select using (public.is_admin());
+create policy "Admins can update requests"
+  on public.movie_requests for update using (public.is_admin());
 
 create policy "Users can view their own ratings"
   on public.ratings for select using (auth.uid() = user_id);
@@ -130,6 +205,13 @@ create policy "Users can upsert their own ratings"
 create policy "Users can update their own ratings"
   on public.ratings for update using (auth.uid() = user_id);
 
--- Admin write access to catalog tables should be granted via a separate
--- `service_role`-backed admin API/dashboard, or by adding an `is_admin`
--- column/claim and matching policies once the admin flow is finalized.
+-- Admins (rows in `profiles` with `is_admin = true`) can manage the catalog.
+-- The `is_admin` flag itself is only ever set from the Supabase
+-- dashboard/SQL editor (service_role), never by the frontend, so this is a
+-- trusted, database-backed permission check rather than a client-side one.
+create policy "Admins can manage content types"
+  on public.content_types for all using (public.is_admin()) with check (public.is_admin());
+create policy "Admins can manage categories"
+  on public.categories for all using (public.is_admin()) with check (public.is_admin());
+create policy "Admins can manage content"
+  on public.content for all using (public.is_admin()) with check (public.is_admin());

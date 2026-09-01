@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppState } from '../../context/AppStateContext';
-import type { Content, WatermarkSettings } from '../../types';
+import type { WatermarkSettings } from '../../types';
 import './AdminContentFormPage.css';
 
 const emptyWatermark: WatermarkSettings = {
@@ -34,26 +34,36 @@ export function AdminContentFormPage() {
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     const now = new Date().toISOString();
-    const content: Content = {
-      id: existing?.id ?? `content-${Date.now()}`,
-      title,
-      description,
-      contentTypeId,
-      categoryId,
-      trailerUrl,
-      videoUrl,
-      posterUrl: posterUrl || 'https://picsum.photos/seed/new-content/400/560',
-      durationMinutes,
-      releaseYear,
-      watermark,
-      createdAt: existing?.createdAt ?? now,
-      updatedAt: now,
-    };
+    const watermarkSettings = watermark;
 
-    if (isEditing) {
-      updateContent(content);
+    if (isEditing && existing) {
+      updateContent({
+        ...existing,
+        title,
+        description,
+        contentTypeId,
+        categoryId,
+        trailerUrl,
+        videoUrl,
+        posterUrl: posterUrl || 'https://picsum.photos/seed/new-content/400/560',
+        durationMinutes,
+        releaseYear,
+        watermark: watermarkSettings,
+        updatedAt: now,
+      });
     } else {
-      addContent(content);
+      addContent({
+        title,
+        description,
+        contentTypeId,
+        categoryId,
+        trailerUrl,
+        videoUrl,
+        posterUrl: posterUrl || 'https://picsum.photos/seed/new-content/400/560',
+        durationMinutes,
+        releaseYear,
+        watermark: watermarkSettings,
+      });
     }
     navigate('/admin/content');
   };

@@ -15,13 +15,17 @@ export async function fetchContentTypes(): Promise<ContentType[]> {
   return (data as ContentTypeRow[]).map(mapContentTypeRow);
 }
 
-export async function insertContentType(contentType: ContentType): Promise<void> {
-  if (!isSupabaseConfigured) return;
+export async function insertContentType(contentType: Omit<ContentType, 'id'>): Promise<ContentType> {
+  if (!isSupabaseConfigured) {
+    // Mock fallback: fabricate a local id so the caller can still render it.
+    return { id: `ct-${Date.now()}`, ...contentType };
+  }
 
-  const { error } = await supabase.from('content_types').insert({
-    id: contentType.id,
-    name: contentType.name,
-    description: contentType.description ?? null,
-  });
+  const { data, error } = await supabase
+    .from('content_types')
+    .insert({ name: contentType.name, description: contentType.description ?? null })
+    .select()
+    .single();
   if (error) throw error;
+  return mapContentTypeRow(data as ContentTypeRow);
 }

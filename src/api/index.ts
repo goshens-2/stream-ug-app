@@ -9,3 +9,4 @@ export * from './categoriesApi';
 export * from './contentTypesApi';
 export * from './movieRequestsApi';
 export * from './ratingsApi';
+export * from './profileApi';

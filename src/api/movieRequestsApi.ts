@@ -18,17 +18,36 @@ export async function fetchMovieRequests(): Promise<MovieRequest[]> {
   return (data as MovieRequestRow[]).map(mapMovieRequestRow);
 }
 
-export async function insertMovieRequest(request: MovieRequest): Promise<void> {
-  if (!isSupabaseConfigured) return;
+export type NewMovieRequest = Pick<MovieRequest, 'title' | 'note' | 'requestedBy'>;
 
-  const { error } = await supabase.from('movie_requests').insert({
-    id: request.id,
-    title: request.title,
-    note: request.note ?? null,
-    requested_by: request.requestedBy,
-    status: request.status,
-  });
+/**
+ * Inserts a new movie request, letting the database generate its `id` and
+ * `created_at`/`status` defaults, and returns the created row. In mock mode,
+ * fabricates a local id/timestamp so the UI still has something to render.
+ */
+export async function insertMovieRequest(request: NewMovieRequest): Promise<MovieRequest> {
+  if (!isSupabaseConfigured) {
+    return {
+      id: `request-${Date.now()}`,
+      title: request.title,
+      note: request.note,
+      requestedBy: request.requestedBy,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  const { data, error } = await supabase
+    .from('movie_requests')
+    .insert({
+      title: request.title,
+      note: request.note ?? null,
+      requested_by: request.requestedBy,
+    })
+    .select()
+    .single();
   if (error) throw error;
+  return mapMovieRequestRow(data as MovieRequestRow);
 }
 
 export async function updateMovieRequestStatus(

@@ -10,8 +10,22 @@ import {
   ratings as initialRatings,
   users as initialUsers,
 } from '../data/mockData';
-import { fetchCategories, fetchContentTypes, fetchContents, fetchMovieRequests, fetchRatings, insertContentType, insertMovieRequest, updateMovieRequestStatus as updateMovieRequestStatusApi, upsertContent, upsertRating } from '../api';
-import { isSupabaseConfigured } from '../lib/supabaseClient';
+import {
+  fetchCategories,
+  fetchContentTypes,
+  fetchContents,
+  fetchMovieRequests,
+  fetchProfile,
+  fetchRatings,
+  fetchSharedAccessGrantor,
+  insertContent,
+  insertContentType,
+  insertMovieRequest,
+  updateMovieRequestStatus as updateMovieRequestStatusApi,
+  upsertContent,
+  upsertRating,
+} from '../api';
+import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
 import type {
   Account,
   Ad,
@@ -24,6 +38,11 @@ import type {
   Rating,
   User,
 } from '../types';
+
+/** Input for creating new content; `id`/timestamps are assigned by the DB (or the mock fallback). */
+type NewContent = Omit<Content, 'id' | 'createdAt' | 'updatedAt'>;
+/** Input for creating a new content type; `id` is assigned by the DB (or the mock fallback). */
+type NewContentType = Omit<ContentType, 'id'>;
 
 interface AppState {
   contents: Content[];
@@ -38,12 +57,14 @@ interface AppState {
   isAuthenticated: boolean;
   currentUser: User | null;
   isSubscribed: boolean;
-  login: (email: string, password: string) => AuthResult;
-  signup: (name: string, email: string, password: string) => AuthResult;
+  /** True while the initial Supabase Auth session is being resolved on load. */
+  authLoading: boolean;
+  login: (email: string, password: string) => Promise<AuthResult>;
+  signup: (name: string, email: string, password: string) => Promise<AuthResult>;
   logout: () => void;
-  addContent: (content: Content) => void;
+  addContent: (content: NewContent) => void;
   updateContent: (content: Content) => void;
-  addContentType: (contentType: ContentType) => void;
+  addContentType: (contentType: NewContentType) => void;
   submitMovieRequest: (title: string, note?: string) => void;
   updateMovieRequestStatus: (id: string, status: MovieRequest['status']) => void;
   rateContent: (contentId: string, score: number) => void;
@@ -61,6 +82,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [accounts, setAccounts] = useState<Account[]>(initialAccounts);
   const [session, setSession] = useState<AuthSession | null>(null);
+  const [authLoading, setAuthLoading] = useState<boolean>(isSupabaseConfigured);
 
   // When Supabase is configured (VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY),
   // replace the mock data with live data from the database. Without those
@@ -81,13 +103,72 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Auth: when Supabase is configured, hydrate the session from Supabase Auth
+  // (instead of the mock `accounts`/`users` arrays) and keep it in sync via
+  // `onAuthStateChange`. The signed-in user's profile/subscription/shared-
+  // access state is loaded from the `profiles`/`subscriptions` tables.
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    let cancelled = false;
+
+    const hydrateSession = async (authUserId: string | null) => {
+      if (!authUserId) {
+        if (!cancelled) setSession(null);
+        return;
+      }
+      try {
+        const [profile, grantedByUserId] = await Promise.all([
+          fetchProfile(authUserId),
+          fetchSharedAccessGrantor(authUserId),
+        ]);
+        if (cancelled) return;
+        if (!profile) {
+          // Auth succeeded but no profile row exists yet (e.g. the
+          // `handle_new_user` trigger from supabase/schema.sql hasn't run).
+          setSession(null);
+          return;
+        }
+        setSession(
+          grantedByUserId
+            ? { user: profile, isSharedAccess: true, grantedByUserId }
+            : { user: profile, isSharedAccess: false },
+        );
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to load Supabase profile for signed-in user:', err);
+        if (!cancelled) setSession(null);
+      }
+    };
+
+    void supabase.auth.getSession().then(({ data }) => {
+      void hydrateSession(data.session?.user.id ?? null).finally(() => {
+        if (!cancelled) setAuthLoading(false);
+      });
+    });
+
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      void hydrateSession(newSession?.user.id ?? null);
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.subscription.unsubscribe();
+    };
+  }, []);
+
   const currentUser = session?.user ?? null;
   const isAuthenticated = session !== null;
   const isSubscribed = session
     ? session.isSharedAccess || session.user.isSubscribed
     : false;
 
-  const login = (email: string, password: string): AuthResult => {
+  const login = async (email: string, password: string): Promise<AuthResult> => {
+    if (isSupabaseConfigured) {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) return { success: false, error: error.message };
+      return { success: true };
+    }
+
     const normalizedEmail = email.trim().toLowerCase();
     const account = accounts.find((a) => a.email.toLowerCase() === normalizedEmail);
     if (!account) {
@@ -118,12 +199,23 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     return { success: false, error: 'Incorrect password.' };
   };
 
-  const signup = (name: string, email: string, password: string): AuthResult => {
+  const signup = async (name: string, email: string, password: string): Promise<AuthResult> => {
     const trimmedName = name.trim();
     const normalizedEmail = email.trim().toLowerCase();
     if (!trimmedName || !normalizedEmail || !password) {
       return { success: false, error: 'Name, email, and password are all required.' };
     }
+
+    if (isSupabaseConfigured) {
+      const { error } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password,
+        options: { data: { name: trimmedName } },
+      });
+      if (error) return { success: false, error: error.message };
+      return { success: true };
+    }
+
     if (accounts.some((a) => a.email.toLowerCase() === normalizedEmail)) {
       return { success: false, error: 'An account with that email already exists.' };
     }
@@ -146,7 +238,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     return { success: true };
   };
 
-  const logout = () => setSession(null);
+  const logout = () => {
+    if (isSupabaseConfigured) {
+      void supabase.auth.signOut();
+      return;
+    }
+    setSession(null);
+  };
 
   const value: AppState = {
     contents,
@@ -161,32 +259,48 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     isAuthenticated,
     currentUser,
     isSubscribed,
+    authLoading,
     login,
     signup,
     logout,
     addContent: (content) => {
-      setContents((prev) => [content, ...prev]);
-      void upsertContent(content);
+      const now = new Date().toISOString();
+      const localContent: Content = { ...content, id: `content-${Date.now()}`, createdAt: now, updatedAt: now };
+      // Optimistically render with a local id, then reconcile with the
+      // database-generated id/timestamps once the insert resolves.
+      setContents((prev) => [localContent, ...prev]);
+      void insertContent(localContent).then((created) => {
+        if (created.id === localContent.id) return;
+        setContents((prev) => prev.map((c) => (c.id === localContent.id ? created : c)));
+      });
     },
     updateContent: (content) => {
       setContents((prev) => prev.map((c) => (c.id === content.id ? content : c)));
       void upsertContent(content);
     },
     addContentType: (contentType) => {
-      setContentTypes((prev) => [...prev, contentType]);
-      void insertContentType(contentType);
+      const localContentType: ContentType = { ...contentType, id: `ct-${Date.now()}` };
+      setContentTypes((prev) => [...prev, localContentType]);
+      void insertContentType(contentType).then((created) => {
+        if (created.id === localContentType.id) return;
+        setContentTypes((prev) => prev.map((ct) => (ct.id === localContentType.id ? created : ct)));
+      });
     },
     submitMovieRequest: (title, note) => {
-      const newRequest: MovieRequest = {
+      const requestedBy = currentUser?.id ?? 'unknown';
+      const localRequest: MovieRequest = {
         id: `request-${Date.now()}`,
         title,
         note,
-        requestedBy: currentUser?.id ?? 'unknown',
+        requestedBy,
         status: 'pending',
         createdAt: new Date().toISOString(),
       };
-      setMovieRequests((prev) => [newRequest, ...prev]);
-      void insertMovieRequest(newRequest);
+      setMovieRequests((prev) => [localRequest, ...prev]);
+      void insertMovieRequest({ title, note, requestedBy }).then((created) => {
+        if (created.id === localRequest.id) return;
+        setMovieRequests((prev) => prev.map((r) => (r.id === localRequest.id ? created : r)));
+      });
     },
     updateMovieRequestStatus: (id, status) => {
       setMovieRequests((prev) =>
@@ -194,27 +308,35 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       );
       void updateMovieRequestStatusApi(id, status);
     },
-    rateContent: (contentId, score) =>
+    rateContent: (contentId, score) => {
+      if (!currentUser) return;
+      const userId = currentUser.id;
       setRatings((prev) => {
-        if (!currentUser) return prev;
-        const existingIndex = prev.findIndex(
-          (r) => r.contentId === contentId && r.userId === currentUser.id,
-        );
-        const newRating: Rating = {
+        const existingIndex = prev.findIndex((r) => r.contentId === contentId && r.userId === userId);
+        const localRating: Rating = {
           id: existingIndex >= 0 ? prev[existingIndex].id : `rating-${Date.now()}`,
           contentId,
-          userId: currentUser.id,
+          userId,
           score,
           createdAt: new Date().toISOString(),
         };
-        void upsertRating(newRating);
+        void upsertRating({ contentId, userId, score }).then((created) => {
+          setRatings((current) => {
+            const idx = current.findIndex((r) => r.contentId === contentId && r.userId === userId);
+            if (idx < 0) return current;
+            const copy = [...current];
+            copy[idx] = created;
+            return copy;
+          });
+        });
         if (existingIndex >= 0) {
           const copy = [...prev];
-          copy[existingIndex] = newRating;
+          copy[existingIndex] = localRating;
           return copy;
         }
-        return [newRating, ...prev];
-      }),
+        return [localRating, ...prev];
+      });
+    },
   };
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;

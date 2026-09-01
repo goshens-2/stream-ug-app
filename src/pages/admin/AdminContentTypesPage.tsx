@@ -10,7 +10,7 @@ export function AdminContentTypesPage() {
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!name.trim()) return;
-    addContentType({ id: `ct-${Date.now()}`, name: name.trim(), description: description.trim() || undefined });
+    addContentType({ name: name.trim(), description: description.trim() || undefined });
     setName('');
     setDescription('');
   };
