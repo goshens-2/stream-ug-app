@@ -26,7 +26,7 @@ export function ContentDetailPage() {
   const category = categories.find((c) => c.id === content.categoryId);
   const contentType = contentTypes.find((t) => t.id === content.contentTypeId);
   const myRating = ratings.find(
-    (r) => r.contentId === content.id && r.userId === currentUser.id,
+    (r) => r.contentId === content.id && r.userId === currentUser?.id,
   )?.score ?? 0;
   const averageRating = getAverageRating(content.id, ratings);
 

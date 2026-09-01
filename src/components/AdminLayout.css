@@ -16,6 +16,12 @@
 .admin-layout__brand {
   font-weight: 800;
   color: #e50914;
+  margin-bottom: 0.5rem;
+}
+
+.admin-layout__user {
+  font-size: 0.85rem;
+  color: #d0d0d0;
   margin-bottom: 1.5rem;
 }
 
@@ -34,6 +40,17 @@
 .admin-layout__nav a.active {
   color: #fff;
   font-weight: 600;
+}
+
+.admin-layout__logout {
+  align-self: flex-start;
+  background: none;
+  border: 1px solid #333;
+  color: #d0d0d0;
+  padding: 0.4rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
 }
 
 .admin-layout__main {

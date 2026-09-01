@@ -11,8 +11,8 @@ export function HomePage() {
   const { contents, categories, ratings, ads, isSubscribed, currentUser } = useAppState();
 
   const recommendations = useMemo(
-    () => getRecommendationsForUser(currentUser.id, contents, ratings, 6),
-    [currentUser.id, contents, ratings],
+    () => (currentUser ? getRecommendationsForUser(currentUser.id, contents, ratings, 6) : []),
+    [currentUser, contents, ratings],
   );
 
   const recommendedContent = recommendations

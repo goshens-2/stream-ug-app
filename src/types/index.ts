@@ -97,3 +97,33 @@ export interface Ad {
   imageUrl: string;
   targetUrl: string;
 }
+
+/**
+ * A login credential linked to a `User`. This is a mock/in-memory stand-in for a
+ * future backend auth table and is intentionally simple (plaintext password) since
+ * the app is still frontend-only.
+ */
+export interface Account {
+  id: string;
+  userId: string;
+  email: string;
+  password: string;
+}
+
+/**
+ * The currently authenticated session. `isSharedAccess` is true when the user logged
+ * in using another account's shared password (e.g. a family-share subscription)
+ * rather than their own credentials. `grantedByUserId` identifies the subscriber
+ * whose shared password was used, so the app can attribute/limit shared access.
+ */
+export interface AuthSession {
+  user: User;
+  isSharedAccess: boolean;
+  grantedByUserId?: string;
+}
+
+/** Result of an auth operation (login/signup), used to surface validation errors. */
+export interface AuthResult {
+  success: boolean;
+  error?: string;
+}
