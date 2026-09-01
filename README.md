@@ -17,6 +17,29 @@ npm run build    # type-check and build for production
 npm run lint     # lint with oxlint
 ```
 
+## Connecting Supabase
+
+The app can run entirely on mock data, or connect to a real
+[Supabase](https://supabase.com) project for persistent storage:
+
+1. Copy `.env.example` to `.env`.
+2. In your Supabase project dashboard, go to **Project Settings → API** and
+   copy the **Project URL** and **anon public** (or **publishable**) key into
+   `.env` as `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
+3. Run the starter schema in `supabase/schema.sql` (Supabase SQL editor or
+   CLI) to create the `profiles`, `subscriptions`, `content_types`,
+   `categories`, `content`, `movie_requests`, and `ratings` tables.
+4. Restart `npm run dev`.
+
+When the env vars are set, `src/context/AppStateContext.tsx` loads content,
+categories, content types, movie requests, and ratings from Supabase via the
+data-access layer in `src/api/`, and writes (new content, requests, ratings,
+etc.) are persisted there too. Without the env vars, everything falls back to
+the mock data in `src/data/mockData.ts`, so the app keeps working out of the
+box. Authentication (`login`/`signup`/`logout`) is still mock/in-memory (see
+`src/context/AppStateContext.tsx`) and is a good next step to wire up to
+Supabase Auth using the `profiles` table in `supabase/schema.sql`.
+
 ## Project structure
 
 ```
@@ -24,9 +47,14 @@ src/
   types/                 Shared data models (Content, Category, ContentType,
                           MovieRequest, Rating, User, Subscription, Ad, ...)
   data/mockData.ts        Sample/mock data covering every required category
+  lib/supabaseClient.ts    Reusable Supabase client (reads env vars, see
+                          "Connecting Supabase" below)
+  api/                     Data-access layer; reads/writes Supabase when
+                          configured, otherwise falls back to mock data
   context/AppStateContext.tsx
-                          In-memory app state (content, ratings, requests,
-                          subscription status) shared across Admin & User panels
+                          App state (content, ratings, requests, subscription
+                          status) shared across Admin & User panels; loads
+                          from `src/api/` on mount
   utils/recommendations.ts
                           Recommendation algorithm scaffold based on ratings
                           and category affinity

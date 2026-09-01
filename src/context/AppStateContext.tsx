@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   accounts as initialAccounts,
@@ -10,6 +10,8 @@ import {
   ratings as initialRatings,
   users as initialUsers,
 } from '../data/mockData';
+import { fetchCategories, fetchContentTypes, fetchContents, fetchMovieRequests, fetchRatings, insertContentType, insertMovieRequest, updateMovieRequestStatus as updateMovieRequestStatusApi, upsertContent, upsertRating } from '../api';
+import { isSupabaseConfigured } from '../lib/supabaseClient';
 import type {
   Account,
   Ad,
@@ -51,7 +53,7 @@ const AppStateContext = createContext<AppState | undefined>(undefined);
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const [contents, setContents] = useState<Content[]>(initialContents);
-  const [categories] = useState<Category[]>(initialCategories);
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [contentTypes, setContentTypes] = useState<ContentType[]>(initialContentTypes);
   const [movieRequests, setMovieRequests] = useState<MovieRequest[]>(initialMovieRequests);
   const [ratings, setRatings] = useState<Rating[]>(initialRatings);
@@ -59,6 +61,25 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [accounts, setAccounts] = useState<Account[]>(initialAccounts);
   const [session, setSession] = useState<AuthSession | null>(null);
+
+  // When Supabase is configured (VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY),
+  // replace the mock data with live data from the database. Without those
+  // env vars, the API layer resolves with the same mock data, so this is a
+  // no-op and the app behaves exactly as before.
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    let cancelled = false;
+
+    void fetchContents().then((data) => !cancelled && setContents(data));
+    void fetchCategories().then((data) => !cancelled && setCategories(data));
+    void fetchContentTypes().then((data) => !cancelled && setContentTypes(data));
+    void fetchMovieRequests().then((data) => !cancelled && setMovieRequests(data));
+    void fetchRatings().then((data) => !cancelled && setRatings(data));
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const currentUser = session?.user ?? null;
   const isAuthenticated = session !== null;
@@ -143,27 +164,36 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     login,
     signup,
     logout,
-    addContent: (content) => setContents((prev) => [content, ...prev]),
-    updateContent: (content) =>
-      setContents((prev) => prev.map((c) => (c.id === content.id ? content : c))),
-    addContentType: (contentType) =>
-      setContentTypes((prev) => [...prev, contentType]),
-    submitMovieRequest: (title, note) =>
-      setMovieRequests((prev) => [
-        {
-          id: `request-${Date.now()}`,
-          title,
-          note,
-          requestedBy: currentUser?.id ?? 'unknown',
-          status: 'pending',
-          createdAt: new Date().toISOString(),
-        },
-        ...prev,
-      ]),
-    updateMovieRequestStatus: (id, status) =>
+    addContent: (content) => {
+      setContents((prev) => [content, ...prev]);
+      void upsertContent(content);
+    },
+    updateContent: (content) => {
+      setContents((prev) => prev.map((c) => (c.id === content.id ? content : c)));
+      void upsertContent(content);
+    },
+    addContentType: (contentType) => {
+      setContentTypes((prev) => [...prev, contentType]);
+      void insertContentType(contentType);
+    },
+    submitMovieRequest: (title, note) => {
+      const newRequest: MovieRequest = {
+        id: `request-${Date.now()}`,
+        title,
+        note,
+        requestedBy: currentUser?.id ?? 'unknown',
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+      };
+      setMovieRequests((prev) => [newRequest, ...prev]);
+      void insertMovieRequest(newRequest);
+    },
+    updateMovieRequestStatus: (id, status) => {
       setMovieRequests((prev) =>
         prev.map((r) => (r.id === id ? { ...r, status } : r)),
-      ),
+      );
+      void updateMovieRequestStatusApi(id, status);
+    },
     rateContent: (contentId, score) =>
       setRatings((prev) => {
         if (!currentUser) return prev;
@@ -177,6 +207,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           score,
           createdAt: new Date().toISOString(),
         };
+        void upsertRating(newRating);
         if (existingIndex >= 0) {
           const copy = [...prev];
           copy[existingIndex] = newRating;
