@@ -1,0 +1,16 @@
+.home-page__marquee-section {
+  margin-bottom: 1.5rem;
+}
+
+.home-page__hint {
+  color: #f5c518;
+  font-size: 0.85rem;
+  margin: 0 0 0.75rem;
+}
+
+.home-page__marquee-row {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}

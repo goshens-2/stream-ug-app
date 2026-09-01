@@ -1,0 +1,43 @@
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #0f0f0f;
+  color: #f5f5f5;
+}
+
+.admin-layout__sidebar {
+  width: 220px;
+  flex: 0 0 auto;
+  background: #141414;
+  border-right: 1px solid #262626;
+  padding: 1.25rem 1rem;
+}
+
+.admin-layout__brand {
+  font-weight: 800;
+  color: #e50914;
+  margin-bottom: 1.5rem;
+}
+
+.admin-layout__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-layout__nav a {
+  color: #d0d0d0;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.admin-layout__nav a.active {
+  color: #fff;
+  font-weight: 600;
+}
+
+.admin-layout__main {
+  flex: 1;
+  padding: 1.5rem 2rem;
+  max-width: 960px;
+}

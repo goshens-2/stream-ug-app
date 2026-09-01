@@ -1,0 +1,56 @@
+.movie-request-page {
+  max-width: 480px;
+}
+
+.movie-request-page__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.movie-request-page__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+}
+
+.movie-request-page__form input,
+.movie-request-page__form textarea {
+  background: #1c1c1c;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 0.5rem;
+  color: #f5f5f5;
+}
+
+.movie-request-page__form button {
+  align-self: flex-start;
+  background: #e50914;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.movie-request-page__history ul {
+  list-style: none;
+  padding: 0;
+}
+
+.status {
+  text-transform: capitalize;
+  font-weight: 600;
+}
+.status--pending {
+  color: #f5c518;
+}
+.status--approved,
+.status--fulfilled {
+  color: #2ecc71;
+}
+.status--rejected {
+  color: #e74c3c;
+}
