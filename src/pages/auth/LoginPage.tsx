@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAppState } from '../../context/AppStateContext';
+import { ADMIN_EMAIL } from '../../data/mockData';
 import './AuthPage.css';
 
 /**
@@ -31,7 +32,8 @@ export function LoginPage() {
       return;
     }
     setError(null);
-    navigate('/browse', { replace: true });
+    const destination = email.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase() ? '/admin' : '/browse';
+    navigate(destination, { replace: true });
   };
 
   return (

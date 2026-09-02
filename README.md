@@ -67,6 +67,26 @@ Without the env vars, everything falls back to the mock data/mock auth in
 `src/data/mockData.ts` and `src/context/AppStateContext.tsx`, so the app keeps
 working out of the box for local development without a Supabase project.
 
+## Admin access
+
+The app reserves `admin@stream.com` as the admin login. How you set its
+password depends on whether Supabase is connected:
+
+- **With Supabase connected (recommended):** sign up normally with
+  `admin@stream.com` through the app's Sign Up page (this lets *you* choose
+  the password — it's never stored in source), then run step 5 above
+  (`update public.profiles set is_admin = true where email = 'admin@stream.com';`)
+  to grant it Admin Panel access.
+- **Without Supabase (mock/local-dev mode):** set `VITE_MOCK_ADMIN_PASSWORD`
+  in your `.env` (copy `.env.example` if you haven't) to bootstrap a local
+  password for `admin@stream.com`, then restart `npm run dev`. Without this
+  variable set, the mock admin account has no usable password and can't be
+  logged into — no admin password is ever hardcoded in source
+  (see `src/data/mockData.ts`).
+
+Either way, once `admin@stream.com` is signed in it lands in the Admin Panel
+because its `isAdmin`/`is_admin` flag is `true`.
+
 ## Project structure
 
 ```
