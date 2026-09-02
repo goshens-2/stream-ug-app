@@ -2,33 +2,12 @@ import type { Category, Content, Rating, ViewHistoryEntry } from '../types';
 import { getWatchCounts } from './analytics';
 import { getAverageRating, getRecommendationsForUser } from './recommendations';
 
-/** Keys identifying curated rows/collections surfaced across browse experiences. */
-export type CollectionKey =
-  | 'trending'
-  | 'featured'
-  | 'popular'
-  | 'recently-added'
-  | 'recommended'
-  | 'continue-watching'
-  | 'recently-viewed';
-
 export const FEATURED_COLLECTION_ID = 'featured';
 export const POPULAR_COLLECTION_ID = 'popular';
 export const RECENTLY_ADDED_COLLECTION_ID = 'recently-added';
 export const CONTINUE_WATCHING_COLLECTION_ID = 'continue-watching';
 export const RECOMMENDED_COLLECTION_ID = 'recommended';
 export const RECENTLY_VIEWED_COLLECTION_ID = 'recently-viewed';
-
-/** Titles for curated collections, including legacy aliases kept for deep links. */
-export const COLLECTION_TITLES: Record<CollectionKey, string> = {
-  trending: 'Trending Now',
-  featured: 'Featured & Trending',
-  popular: 'Popular on STREAM UG',
-  'recently-added': 'Recently Added',
-  recommended: 'Recommended For You',
-  'continue-watching': 'Continue Watching',
-  'recently-viewed': 'Recently Viewed',
-};
 
 /** A lightweight, human-facing description of a homepage row/collection. */
 export interface Collection {
@@ -37,19 +16,12 @@ export interface Collection {
 }
 
 export const SYNTHETIC_COLLECTIONS: Record<string, Collection> = {
-  trending: { id: 'trending', name: COLLECTION_TITLES.trending },
-  [FEATURED_COLLECTION_ID]: { id: FEATURED_COLLECTION_ID, name: COLLECTION_TITLES.featured },
-  [POPULAR_COLLECTION_ID]: { id: POPULAR_COLLECTION_ID, name: COLLECTION_TITLES.popular },
-  [RECENTLY_ADDED_COLLECTION_ID]: { id: RECENTLY_ADDED_COLLECTION_ID, name: COLLECTION_TITLES['recently-added'] },
-  [CONTINUE_WATCHING_COLLECTION_ID]: {
-    id: CONTINUE_WATCHING_COLLECTION_ID,
-    name: COLLECTION_TITLES['continue-watching'],
-  },
-  [RECOMMENDED_COLLECTION_ID]: { id: RECOMMENDED_COLLECTION_ID, name: COLLECTION_TITLES.recommended },
-  [RECENTLY_VIEWED_COLLECTION_ID]: {
-    id: RECENTLY_VIEWED_COLLECTION_ID,
-    name: COLLECTION_TITLES['recently-viewed'],
-  },
+  [FEATURED_COLLECTION_ID]: { id: FEATURED_COLLECTION_ID, name: 'Featured & Trending' },
+  [POPULAR_COLLECTION_ID]: { id: POPULAR_COLLECTION_ID, name: 'Popular on STREAM UG' },
+  [RECENTLY_ADDED_COLLECTION_ID]: { id: RECENTLY_ADDED_COLLECTION_ID, name: 'Recently Added' },
+  [CONTINUE_WATCHING_COLLECTION_ID]: { id: CONTINUE_WATCHING_COLLECTION_ID, name: 'Continue Watching' },
+  [RECOMMENDED_COLLECTION_ID]: { id: RECOMMENDED_COLLECTION_ID, name: 'Recommended For You' },
+  [RECENTLY_VIEWED_COLLECTION_ID]: { id: RECENTLY_VIEWED_COLLECTION_ID, name: 'Recently Viewed' },
 };
 
 /** Builds a `contentId -> watch count` lookup from view history, for display on cards. */
@@ -70,11 +42,6 @@ export function getFeaturedAndTrending(
       const score = (id: string) => (watchCounts.get(id) ?? 0) * 2 + getAverageRating(id, ratings);
       return score(b.id) - score(a.id);
     });
-}
-
-/** Legacy alias kept for ExplorePage/backward-compatible deep links. */
-export function getTrending(contents: Content[], ratings: Rating[], viewHistory: ViewHistoryEntry[]): Content[] {
-  return getFeaturedAndTrending(contents, viewHistory, ratings);
 }
 
 /** Ranks content purely by how many people have watched it, most-watched first. */
@@ -103,11 +70,6 @@ export function getRecommendedContent(
   return getRecommendationsForUser(userId, contents, ratings, limit)
     .map((rec) => contents.find((content) => content.id === rec.contentId))
     .filter((content): content is Content => Boolean(content));
-}
-
-/** Legacy alias kept for existing full-rail listings. */
-export function getRecommended(userId: string | undefined, contents: Content[], ratings: Rating[]): Content[] {
-  return getRecommendedContent(contents, ratings, userId, contents.length);
 }
 
 /** Titles a signed-in user has started but not finished watching, most recent first. */

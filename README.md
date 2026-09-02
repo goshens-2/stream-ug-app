@@ -136,8 +136,8 @@ src/
                           (full listing for a row/genre), Search results page,
                           Content detail/watch page (trailer toggle, watch
                           counts, related/recommended rails, rich metadata),
-                          Movie request form, Trailers search page, legacy
-                          Explore page, My Watchlist, Account Settings
+                          Movie request form, Trailers search page, My
+                          Watchlist, Account Settings
   pages/admin/             Admin Panel web pages (mounted under `/admin`):
                           Dashboard, Content list, Content upload/edit form
                           (incl. watermark settings), Content Types manager,
@@ -160,7 +160,6 @@ src/
 | `/browse/requests`           | signed-in       | User Panel: submit a movie request |
 | `/browse/trailers`           | signed-in       | User Panel: search & preview trailers |
 | `/browse/watchlist`          | signed-in       | User Panel: My Watchlist / My Requests |
-| `/browse/explore/:key`       | signed-in       | User Panel: legacy full listing for rail/category deep links |
 | `/browse/account`            | signed-in       | User Panel: Account Settings |
 | `/admin`, `/admin/*`         | signed-in       | Admin Panel dashboard & management pages |
 | `/admin/analytics`           | signed-in admin | Admin Panel: engagement analytics |
@@ -186,9 +185,7 @@ src/
   Added, Recently Viewed, plus one row per category, with Browse All filters
   for genre, sort, language, release year, and minimum user rating
 - Each horizontal row has an "Explore more" link/card that opens a full
-  listing page for that row or category (`pages/user/CategoryPage.tsx`),
-  while legacy `/browse/explore/:key` deep links still resolve via
-  `pages/user/ExplorePage.tsx`
+  listing page for that row or category (`pages/user/CategoryPage.tsx`)
 - Navbar search offers live title/actor/director/genre/language suggestions
   and opens a dedicated search results page matching title, description,
   category, people, genres, and language (`components/Navbar.tsx`,

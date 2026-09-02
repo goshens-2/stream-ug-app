@@ -17,7 +17,6 @@ import { AdminUsersPage } from './pages/admin/AdminUsersPage';
 import { AccountSettingsPage } from './pages/user/AccountSettingsPage';
 import { CategoryPage } from './pages/user/CategoryPage';
 import { ContentDetailPage } from './pages/user/ContentDetailPage';
-import { ExplorePage } from './pages/user/ExplorePage';
 import { HomePage } from './pages/user/HomePage';
 import { MovieRequestPage } from './pages/user/MovieRequestPage';
 import { SearchPage } from './pages/user/SearchPage';
@@ -41,7 +40,6 @@ function App() {
               <Route path="requests" element={<MovieRequestPage />} />
               <Route path="trailers" element={<TrailersPage />} />
               <Route path="watchlist" element={<WatchlistPage />} />
-              <Route path="explore/:key" element={<ExplorePage />} />
               <Route path="account" element={<AccountSettingsPage />} />
             </Route>
           </Route>
