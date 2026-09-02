@@ -17,6 +17,7 @@ import {
 import {
   addFavorite as addFavoriteApi,
   deleteOwnProfile,
+  fetchAllProfiles,
   fetchCategories,
   fetchContentTypes,
   fetchContents,
@@ -35,6 +36,7 @@ import {
   insertSearchLog,
   markNotificationRead as markNotificationReadApi,
   removeFavorite as removeFavoriteApi,
+  setProfileAdmin,
   updateAuthPassword,
   updateMovieRequestStatus as updateMovieRequestStatusApi,
   updateProfileName,
@@ -105,6 +107,8 @@ interface AppState {
   changeUsername: (name: string) => Promise<AuthResult>;
   changePassword: (password: string) => Promise<AuthResult>;
   deleteAccount: () => Promise<AuthResult>;
+  /** Admin-only: promotes/demotes another user's admin flag (`profiles.is_admin`). */
+  setUserAdmin: (userId: string, isAdmin: boolean) => Promise<AuthResult>;
 }
 
 const AppStateContext = createContext<AppState | undefined>(undefined);
@@ -141,6 +145,14 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     void fetchViewHistory().then((data) => !cancelled && setViewHistory(data));
     void fetchSearchLogs().then((data) => !cancelled && setSearchLogs(data));
     void fetchNotifications().then((data) => !cancelled && setNotifications(data));
+    // Only returns more than the caller's own row for a signed-in admin (see
+    // the "Admins can view all profiles" RLS policy), so this is safe to
+    // call unconditionally; non-admins just get their own profile back.
+    void fetchAllProfiles()
+      .then((data) => !cancelled && setUsers(data))
+      .catch(() => {
+        // Not signed in yet, or RLS restricted the read — keep mock users.
+      });
 
     return () => {
       cancelled = true;
@@ -521,6 +533,19 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       setUsers((prev) => prev.filter((u) => u.id !== userId));
       setAccounts((prev) => prev.filter((a) => a.userId !== userId));
       setSession(null);
+      return { success: true };
+    },
+    setUserAdmin: async (userId, isAdmin) => {
+      if (!currentUser?.isAdmin) return { success: false, error: 'You must be an admin.' };
+
+      if (isSupabaseConfigured) {
+        try {
+          await setProfileAdmin(userId, isAdmin);
+        } catch (err) {
+          return { success: false, error: err instanceof Error ? err.message : 'Unable to update user.' };
+        }
+      }
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, isAdmin } : u)));
       return { success: true };
     },
   };
