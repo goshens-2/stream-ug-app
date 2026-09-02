@@ -3,22 +3,30 @@ import { useAppState } from '../../context/AppStateContext';
 import { CategoryRow } from '../../components/CategoryRow';
 import { ContentCard } from '../../components/ContentCard';
 import { TrailerMarquee } from '../../components/TrailerMarquee';
-import { getAverageRating } from '../../utils/recommendations';
-import { getWatchCounts } from '../../utils/analytics';
+import type { Content } from '../../types';
 import {
+  buildWatchCountMap,
+  CONTINUE_WATCHING_COLLECTION_ID,
+  FEATURED_COLLECTION_ID,
   getContinueWatching,
+  getFeaturedAndTrending,
   getPopular,
   getRecentlyAdded,
   getRecentlyViewed,
-  getRecommended,
-  getTrending,
+  getRecommendedContent,
+  POPULAR_COLLECTION_ID,
+  RECENTLY_ADDED_COLLECTION_ID,
+  RECENTLY_VIEWED_COLLECTION_ID,
+  RECOMMENDED_COLLECTION_ID,
 } from '../../utils/collections';
-import type { Content } from '../../types';
+import { getAverageRating } from '../../utils/recommendations';
 import './HomePage.css';
 
 type SortOption = 'trending' | 'newest' | 'top-rated' | 'title';
 
-/** The main User Panel landing page: trailer marquee and horizontal movie rails. */
+const ROW_LIMIT = 12;
+
+/** The main User Panel landing page: trailer marquee and category rows. */
 export function HomePage() {
   const { contents, categories, ratings, viewHistory, currentUser } = useAppState();
   const [genreFilter, setGenreFilter] = useState<string>('all');
@@ -27,34 +35,29 @@ export function HomePage() {
   const [yearFilter, setYearFilter] = useState('all');
   const [minimumRating, setMinimumRating] = useState('all');
 
-  const watchCounts = useMemo(() => getWatchCounts(viewHistory), [viewHistory]);
+  const watchCounts = useMemo(() => buildWatchCountMap(viewHistory), [viewHistory]);
 
-  const trending = useMemo(
-    () => getTrending(contents, ratings, viewHistory),
-    [contents, ratings, viewHistory],
+  const featuredAndTrending = useMemo(
+    () => getFeaturedAndTrending(contents, viewHistory, ratings),
+    [contents, viewHistory, ratings],
   );
-
   const popular = useMemo(() => getPopular(contents, viewHistory), [contents, viewHistory]);
-
   const recentlyAdded = useMemo(() => getRecentlyAdded(contents), [contents]);
-
   const recommendedContent = useMemo(
-    () => getRecommended(currentUser?.id, contents, ratings),
-    [currentUser, contents, ratings],
+    () => getRecommendedContent(contents, ratings, currentUser?.id, contents.length),
+    [contents, ratings, currentUser],
   );
-
   const continueWatching = useMemo(
-    () => getContinueWatching(currentUser?.id, contents, viewHistory),
-    [currentUser, contents, viewHistory],
+    () => getContinueWatching(contents, viewHistory, currentUser?.id),
+    [contents, viewHistory, currentUser],
   );
-
   const recentlyViewed = useMemo(
-    () => getRecentlyViewed(currentUser?.id, contents, viewHistory),
-    [currentUser, contents, viewHistory],
+    () => getRecentlyViewed(contents, viewHistory, currentUser?.id),
+    [contents, viewHistory, currentUser],
   );
 
   const filteredAndSorted = useMemo(() => {
-    let list: Content[] = genreFilter === 'all' ? contents : contents.filter((c) => c.categoryId === genreFilter);
+    let list: Content[] = genreFilter === 'all' ? contents : contents.filter((content) => content.categoryId === genreFilter);
     if (languageFilter !== 'all') list = list.filter((content) => content.language === languageFilter);
     if (yearFilter !== 'all') list = list.filter((content) => content.releaseYear === Number(yearFilter));
     if (minimumRating !== 'all') {
@@ -83,7 +86,10 @@ export function HomePage() {
     () => [...new Set(contents.map((content) => content.language).filter((language): language is string => Boolean(language)))].sort(),
     [contents],
   );
-  const years = useMemo(() => [...new Set(contents.map((content) => content.releaseYear))].sort((a, b) => b - a), [contents]);
+  const years = useMemo(
+    () => [...new Set(contents.map((content) => content.releaseYear))].sort((a, b) => b - a),
+    [contents],
+  );
 
   return (
     <div className="home-page">
@@ -96,69 +102,79 @@ export function HomePage() {
         </div>
       </section>
 
-      {trending.length > 0 && (
+      {featuredAndTrending.length > 0 && (
         <CategoryRow
-          category={{ id: 'trending', name: 'Trending Now', slug: 'trending' }}
-          contents={trending}
-          exploreMoreTo="/browse/explore/trending"
+          category={{ id: FEATURED_COLLECTION_ID, name: 'Featured & Trending' }}
+          contents={featuredAndTrending}
+          limit={ROW_LIMIT}
+          totalCount={featuredAndTrending.length}
           watchCounts={watchCounts}
         />
       )}
 
       {continueWatching.length > 0 && (
         <CategoryRow
-          category={{ id: 'continue-watching', name: 'Continue Watching', slug: 'continue-watching' }}
+          category={{ id: CONTINUE_WATCHING_COLLECTION_ID, name: 'Continue Watching' }}
           contents={continueWatching}
-          exploreMoreTo="/browse/explore/continue-watching"
+          limit={ROW_LIMIT}
+          totalCount={continueWatching.length}
           watchCounts={watchCounts}
         />
       )}
 
       {popular.length > 0 && (
         <CategoryRow
-          category={{ id: 'popular', name: 'Popular on STREAM UG', slug: 'popular' }}
+          category={{ id: POPULAR_COLLECTION_ID, name: 'Popular on STREAM UG' }}
           contents={popular}
-          exploreMoreTo="/browse/explore/popular"
+          limit={ROW_LIMIT}
+          totalCount={popular.length}
           watchCounts={watchCounts}
         />
       )}
 
       {recommendedContent.length > 0 && (
         <CategoryRow
-          category={{ id: 'recommended', name: 'Recommended For You', slug: 'recommended' }}
+          category={{ id: RECOMMENDED_COLLECTION_ID, name: 'Recommended For You' }}
           contents={recommendedContent}
-          exploreMoreTo="/browse/explore/recommended"
+          limit={ROW_LIMIT}
+          totalCount={recommendedContent.length}
           watchCounts={watchCounts}
         />
       )}
 
       {recentlyAdded.length > 0 && (
         <CategoryRow
-          category={{ id: 'recently-added', name: 'Recently Added', slug: 'recently-added' }}
+          category={{ id: RECENTLY_ADDED_COLLECTION_ID, name: 'Recently Added' }}
           contents={recentlyAdded}
-          exploreMoreTo="/browse/explore/recently-added"
+          limit={ROW_LIMIT}
+          totalCount={recentlyAdded.length}
           watchCounts={watchCounts}
         />
       )}
 
       {recentlyViewed.length > 0 && (
         <CategoryRow
-          category={{ id: 'recently-viewed', name: 'Recently Viewed', slug: 'recently-viewed' }}
+          category={{ id: RECENTLY_VIEWED_COLLECTION_ID, name: 'Recently Viewed' }}
           contents={recentlyViewed}
-          exploreMoreTo="/browse/explore/recently-viewed"
+          limit={ROW_LIMIT}
+          totalCount={recentlyViewed.length}
           watchCounts={watchCounts}
         />
       )}
 
-      {categories.map((category) => (
-        <CategoryRow
-          key={category.id}
-          category={category}
-          contents={contents.filter((c) => c.categoryId === category.id)}
-          exploreMoreTo={`/browse/explore/${category.id}`}
-          watchCounts={watchCounts}
-        />
-      ))}
+      {categories.map((category) => {
+        const categoryContent = contents.filter((content) => content.categoryId === category.id);
+        return (
+          <CategoryRow
+            key={category.id}
+            category={category}
+            contents={categoryContent}
+            limit={ROW_LIMIT}
+            totalCount={categoryContent.length}
+            watchCounts={watchCounts}
+          />
+        );
+      })}
 
       <section className="home-page__browse-all">
         <div className="home-page__browse-all-header">
@@ -166,7 +182,7 @@ export function HomePage() {
           <div className="home-page__controls">
             <label>
               Genre
-              <select value={genreFilter} onChange={(e) => setGenreFilter(e.target.value)}>
+              <select value={genreFilter} onChange={(event) => setGenreFilter(event.target.value)}>
                 <option value="all">All Genres</option>
                 {categories.map((category) => (
                   <option key={category.id} value={category.id}>
@@ -177,7 +193,7 @@ export function HomePage() {
             </label>
             <label>
               Sort by
-              <select value={sortOption} onChange={(e) => setSortOption(e.target.value as SortOption)}>
+              <select value={sortOption} onChange={(event) => setSortOption(event.target.value as SortOption)}>
                 <option value="trending">Trending</option>
                 <option value="newest">Newest</option>
                 <option value="top-rated">Top Rated</option>
@@ -186,21 +202,29 @@ export function HomePage() {
             </label>
             <label>
               Language
-              <select value={languageFilter} onChange={(e) => setLanguageFilter(e.target.value)}>
+              <select value={languageFilter} onChange={(event) => setLanguageFilter(event.target.value)}>
                 <option value="all">All languages</option>
-                {languages.map((language) => <option key={language} value={language}>{language}</option>)}
+                {languages.map((language) => (
+                  <option key={language} value={language}>
+                    {language}
+                  </option>
+                ))}
               </select>
             </label>
             <label>
               Year
-              <select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>
+              <select value={yearFilter} onChange={(event) => setYearFilter(event.target.value)}>
                 <option value="all">All years</option>
-                {years.map((year) => <option key={year} value={year}>{year}</option>)}
+                {years.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
               </select>
             </label>
             <label>
               User rating
-              <select value={minimumRating} onChange={(e) => setMinimumRating(e.target.value)}>
+              <select value={minimumRating} onChange={(event) => setMinimumRating(event.target.value)}>
                 <option value="all">Any rating</option>
                 <option value="4">4 stars and up</option>
                 <option value="3">3 stars and up</option>

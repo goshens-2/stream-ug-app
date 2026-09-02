@@ -6,30 +6,40 @@ import { useAppState } from '../context/AppStateContext';
 import './CategoryRow.css';
 
 interface CategoryRowProps {
-  category: Category;
+  category: Category | { id: string; name: string };
   contents: Content[];
-  /** Path to a fuller listing for this rail/category; renders an "Explore more" link when set. */
   exploreMoreTo?: string;
-  /** Cap how many posters are shown in the row itself (the full list is available via "Explore more"). */
   limit?: number;
-  /** Optional `contentId -> watch count` lookup, shown as a badge on each poster. */
   watchCounts?: Map<string, number>;
+  totalCount?: number;
+  showExploreMore?: boolean;
 }
 
-/** Renders a horizontally-scrollable row of content for a single category. */
-export function CategoryRow({ category, contents, exploreMoreTo, limit = 14, watchCounts }: CategoryRowProps) {
+/** Renders a horizontally-scrollable row of content for a single category, with an "Explore more" link. */
+export function CategoryRow({
+  category,
+  contents,
+  exploreMoreTo,
+  limit = contents.length,
+  watchCounts,
+  totalCount,
+  showExploreMore = true,
+}: CategoryRowProps) {
   const { ratings } = useAppState();
 
   if (contents.length === 0) return null;
 
   const visible = contents.slice(0, limit);
+  const fullCount = totalCount ?? contents.length;
+  const hasMore = fullCount > visible.length;
+  const exploreHref = exploreMoreTo ?? `/browse/category/${category.id}`;
 
   return (
     <section className="category-row">
       <div className="category-row__header">
         <h2 className="category-row__title">{category.name}</h2>
-        {exploreMoreTo && contents.length > 0 && (
-          <Link to={exploreMoreTo} className="category-row__explore-more">
+        {showExploreMore && (
+          <Link to={exploreHref} className="category-row__explore-more">
             Explore more &rsaquo;
           </Link>
         )}
@@ -43,6 +53,14 @@ export function CategoryRow({ category, contents, exploreMoreTo, limit = 14, wat
             watchCount={watchCounts?.get(content.id)}
           />
         ))}
+        {showExploreMore && hasMore && (
+          <Link to={exploreHref} className="category-row__more-card">
+            <span>Explore more</span>
+            <span className="category-row__more-card-count">
+              +{fullCount - visible.length} more
+            </span>
+          </Link>
+        )}
       </div>
     </section>
   );

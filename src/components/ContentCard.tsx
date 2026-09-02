@@ -6,7 +6,6 @@ import './ContentCard.css';
 interface ContentCardProps {
   content: Content;
   averageRating?: number;
-  /** Number of people who have watched this title, shown as a "views" badge. */
   watchCount?: number;
 }
 
