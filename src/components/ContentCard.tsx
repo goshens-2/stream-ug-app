@@ -6,36 +6,17 @@ import './ContentCard.css';
 interface ContentCardProps {
   content: Content;
   averageRating?: number;
-<<<<<<< HEAD
-  /** Number of people who have watched this title, shown as a "views" badge. */
   watchCount?: number;
 }
 
-=======
-  watchCount?: number;
-}
-
-/** Formats a raw watch count into a compact "12K" style string for display. */
-function formatWatchCount(count: number): string {
-  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
-  if (count >= 1_000) return `${(count / 1_000).toFixed(1).replace(/\.0$/, '')}K`;
-  return `${count}`;
-}
-
->>>>>>> origin/copilot/goshens-2stream-ug-app
 export function ContentCard({ content, averageRating, watchCount }: ContentCardProps) {
   return (
     <Link to={`/browse/watch/${content.id}`} className="content-card">
       <div className="content-card__poster-wrap">
         <img src={content.posterUrl} alt={content.title} className="content-card__poster" />
         {typeof watchCount === 'number' && watchCount > 0 && (
-<<<<<<< HEAD
           <span className="content-card__watch-count" title={`${watchCount} people watched this`}>
             👁 {formatCompactCount(watchCount)}
-=======
-          <span className="content-card__watch-count" title={`Watched by ${watchCount} people`}>
-            👁 {formatWatchCount(watchCount)}
->>>>>>> origin/copilot/goshens-2stream-ug-app
           </span>
         )}
       </div>

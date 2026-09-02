@@ -1,9 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-<<<<<<< HEAD
-import { Link, NavLink, useNavigate } from 'react-router-dom';
-=======
-import { NavLink, useNavigate, useSearchParams } from 'react-router-dom';
->>>>>>> origin/copilot/goshens-2stream-ug-app
+import { Link, NavLink, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppState } from '../context/AppStateContext';
 import './Navbar.css';
 
@@ -12,33 +8,33 @@ export function Navbar() {
   const { currentUser, logout, notifications, markNotificationRead, contents } = useAppState();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') ?? '');
+  const urlQuery = searchParams.get('q') ?? '';
+  const [draftSearchQuery, setDraftSearchQuery] = useState<string | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
+  const searchQuery = draftSearchQuery ?? urlQuery;
 
-  const handleSearchSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    const trimmed = searchQuery.trim();
-    if (!trimmed) return;
-    navigate(`/browse/search?q=${encodeURIComponent(trimmed)}`);
-  };
-
-  const myNotifications = notifications.filter((n) => n.userId === currentUser?.id);
-  const unreadCount = myNotifications.filter((n) => !n.read).length;
+  const myNotifications = notifications.filter((notification) => notification.userId === currentUser?.id);
+  const unreadCount = myNotifications.filter((notification) => !notification.read).length;
 
   const searchMatches =
-    searchTerm.trim().length > 0
-      ? contents.filter((c) => {
-        const query = searchTerm.trim().toLowerCase();
-        return c.title.toLowerCase().includes(query) ||
-          c.director?.toLowerCase().includes(query) ||
-          c.cast?.some((person) => person.toLowerCase().includes(query));
-      }).slice(0, 6)
+    searchQuery.trim().length > 0
+      ? contents
+        .filter((content) => {
+          const query = searchQuery.trim().toLowerCase();
+          return (
+            content.title.toLowerCase().includes(query) ||
+            content.director?.toLowerCase().includes(query) ||
+            content.cast?.some((person) => person.toLowerCase().includes(query)) ||
+            content.genres?.some((genre) => genre.toLowerCase().includes(query)) ||
+            content.language?.toLowerCase().includes(query)
+          );
+        })
+        .slice(0, 6)
       : [];
 
   useEffect(() => {
@@ -51,6 +47,7 @@ export function Navbar() {
       }
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setSearchOpen(false);
+        setDraftSearchQuery(null);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -59,9 +56,10 @@ export function Navbar() {
 
   const handleSearchSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    const trimmed = searchTerm.trim();
+    const trimmed = searchQuery.trim();
     if (!trimmed) return;
     setSearchOpen(false);
+    setDraftSearchQuery(null);
     navigate(`/browse/search?q=${encodeURIComponent(trimmed)}`);
   };
 
@@ -74,9 +72,9 @@ export function Navbar() {
         <form onSubmit={handleSearchSubmit}>
           <input
             type="search"
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
+            value={searchQuery}
+            onChange={(event) => {
+              setDraftSearchQuery(event.target.value);
               setSearchOpen(true);
             }}
             onFocus={() => setSearchOpen(true)}
@@ -92,7 +90,7 @@ export function Navbar() {
                   to={`/browse/watch/${content.id}`}
                   onClick={() => {
                     setSearchOpen(false);
-                    setSearchTerm('');
+                    setDraftSearchQuery(null);
                   }}
                 >
                   {content.title}
@@ -112,18 +110,6 @@ export function Navbar() {
         <NavLink to="/browse/requests">Request a Movie</NavLink>
         {currentUser?.isAdmin && <NavLink to="/admin">Admin Panel</NavLink>}
       </nav>
-      <form className="navbar__search" onSubmit={handleSearchSubmit} role="search">
-        <input
-          type="search"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search movies, shows, genres…"
-          aria-label="Search"
-        />
-        <button type="submit" aria-label="Submit search">
-          🔍
-        </button>
-      </form>
       <div className="navbar__account">
         <div className="navbar__notif" ref={notifRef}>
           <button

@@ -1,29 +1,28 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { AppStateProvider } from './context/AppStateContext';
+import { AdminLayout } from './components/AdminLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { UserLayout } from './components/UserLayout';
-import { AdminLayout } from './components/AdminLayout';
-import { LandingPage } from './pages/landing/LandingPage';
+import { AppStateProvider } from './context/AppStateContext';
 import { LoginPage } from './pages/auth/LoginPage';
 import { SignupPage } from './pages/auth/SignupPage';
-import { HomePage } from './pages/user/HomePage';
+import { LandingPage } from './pages/landing/LandingPage';
+import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
+import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage';
+import { AdminContentFormPage } from './pages/admin/AdminContentFormPage';
+import { AdminContentListPage } from './pages/admin/AdminContentListPage';
+import { AdminContentTypesPage } from './pages/admin/AdminContentTypesPage';
+import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+import { AdminRequestsPage } from './pages/admin/AdminRequestsPage';
+import { AdminUsersPage } from './pages/admin/AdminUsersPage';
+import { AccountSettingsPage } from './pages/user/AccountSettingsPage';
 import { CategoryPage } from './pages/user/CategoryPage';
-import { SearchPage } from './pages/user/SearchPage';
 import { ContentDetailPage } from './pages/user/ContentDetailPage';
+import { ExplorePage } from './pages/user/ExplorePage';
+import { HomePage } from './pages/user/HomePage';
 import { MovieRequestPage } from './pages/user/MovieRequestPage';
+import { SearchPage } from './pages/user/SearchPage';
 import { TrailersPage } from './pages/user/TrailersPage';
 import { WatchlistPage } from './pages/user/WatchlistPage';
-import { ExplorePage } from './pages/user/ExplorePage';
-import { SearchResultsPage } from './pages/user/SearchResultsPage';
-import { AccountSettingsPage } from './pages/user/AccountSettingsPage';
-import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
-import { AdminContentListPage } from './pages/admin/AdminContentListPage';
-import { AdminContentFormPage } from './pages/admin/AdminContentFormPage';
-import { AdminContentTypesPage } from './pages/admin/AdminContentTypesPage';
-import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage';
-import { AdminRequestsPage } from './pages/admin/AdminRequestsPage';
-import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
-import { AdminUsersPage } from './pages/admin/AdminUsersPage';
 
 function App() {
   return (
@@ -43,7 +42,6 @@ function App() {
               <Route path="trailers" element={<TrailersPage />} />
               <Route path="watchlist" element={<WatchlistPage />} />
               <Route path="explore/:key" element={<ExplorePage />} />
-              <Route path="search" element={<SearchResultsPage />} />
               <Route path="account" element={<AccountSettingsPage />} />
             </Route>
           </Route>

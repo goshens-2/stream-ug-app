@@ -21,15 +21,9 @@
 
 .content-card__watch-count {
   position: absolute;
-<<<<<<< HEAD
   bottom: 0.4rem;
   right: 0.4rem;
   background: rgba(0, 0, 0, 0.75);
-=======
-  bottom: 0.35rem;
-  right: 0.35rem;
-  background: rgba(0, 0, 0, 0.72);
->>>>>>> origin/copilot/goshens-2stream-ug-app
   color: #f5f5f5;
   font-size: 0.7rem;
   padding: 0.15rem 0.4rem;

@@ -2,20 +2,24 @@ import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAppState } from '../../context/AppStateContext';
 import { ContentCard } from '../../components/ContentCard';
-import { getAverageRating } from '../../utils/recommendations';
+import type { Content } from '../../types';
 import {
   buildWatchCountMap,
-  getContinueWatching,
-  getFeaturedAndTrending,
-  getRecentlyViewed,
-  getRecommendedContent,
-  resolveCollectionName,
   CONTINUE_WATCHING_COLLECTION_ID,
   FEATURED_COLLECTION_ID,
+  getContinueWatching,
+  getFeaturedAndTrending,
+  getPopular,
+  getRecentlyAdded,
+  getRecentlyViewed,
+  getRecommendedContent,
+  POPULAR_COLLECTION_ID,
+  RECENTLY_ADDED_COLLECTION_ID,
   RECENTLY_VIEWED_COLLECTION_ID,
   RECOMMENDED_COLLECTION_ID,
+  resolveCollectionName,
 } from '../../utils/collections';
-import type { Content } from '../../types';
+import { getAverageRating } from '../../utils/recommendations';
 import './CategoryPage.css';
 
 type SortOption = 'default' | 'newest' | 'top-rated' | 'title';
@@ -32,6 +36,10 @@ export function CategoryPage() {
     switch (categoryId) {
       case FEATURED_COLLECTION_ID:
         return getFeaturedAndTrending(contents, viewHistory, ratings);
+      case POPULAR_COLLECTION_ID:
+        return getPopular(contents, viewHistory);
+      case RECENTLY_ADDED_COLLECTION_ID:
+        return getRecentlyAdded(contents);
       case CONTINUE_WATCHING_COLLECTION_ID:
         return getContinueWatching(contents, viewHistory, currentUser?.id);
       case RECOMMENDED_COLLECTION_ID:
@@ -39,7 +47,7 @@ export function CategoryPage() {
       case RECENTLY_VIEWED_COLLECTION_ID:
         return getRecentlyViewed(contents, viewHistory, currentUser?.id);
       default:
-        return contents.filter((c) => c.categoryId === categoryId);
+        return contents.filter((content) => content.categoryId === categoryId);
     }
   }, [categoryId, contents, viewHistory, ratings, currentUser]);
 
@@ -77,7 +85,7 @@ export function CategoryPage() {
         </div>
         <label className="category-page__sort">
           Sort by
-          <select value={sortOption} onChange={(e) => setSortOption(e.target.value as SortOption)}>
+          <select value={sortOption} onChange={(event) => setSortOption(event.target.value as SortOption)}>
             <option value="default">Default</option>
             <option value="newest">Newest</option>
             <option value="top-rated">Top Rated</option>

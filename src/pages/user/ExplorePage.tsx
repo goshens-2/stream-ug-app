@@ -2,18 +2,18 @@ import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAppState } from '../../context/AppStateContext';
 import { ContentCard } from '../../components/ContentCard';
-import { getAverageRating } from '../../utils/recommendations';
-import { getWatchCounts } from '../../utils/analytics';
 import {
+  buildWatchCountMap,
   COLLECTION_TITLES,
   getContinueWatching,
+  getFeaturedAndTrending,
   getPopular,
   getRecentlyAdded,
   getRecentlyViewed,
-  getRecommended,
-  getTrending,
+  getRecommendedContent,
   type CollectionKey,
 } from '../../utils/collections';
+import { getAverageRating } from '../../utils/recommendations';
 import './ExplorePage.css';
 
 const COLLECTION_KEYS = new Set<string>(Object.keys(COLLECTION_TITLES));
@@ -23,7 +23,7 @@ export function ExplorePage() {
   const { key } = useParams<{ key: string }>();
   const { contents, categories, ratings, viewHistory, currentUser } = useAppState();
 
-  const category = categories.find((c) => c.id === key);
+  const category = categories.find((item) => item.id === key);
   const isCollection = !!key && COLLECTION_KEYS.has(key);
 
   const list = useMemo(() => {
@@ -31,26 +31,26 @@ export function ExplorePage() {
     if (isCollection) {
       switch (key as CollectionKey) {
         case 'trending':
-          return getTrending(contents, ratings, viewHistory);
+        case 'featured':
+          return getFeaturedAndTrending(contents, viewHistory, ratings);
         case 'popular':
           return getPopular(contents, viewHistory);
         case 'recently-added':
           return getRecentlyAdded(contents);
         case 'recommended':
-          return getRecommended(currentUser?.id, contents, ratings);
+          return getRecommendedContent(contents, ratings, currentUser?.id, contents.length);
         case 'continue-watching':
-          return getContinueWatching(currentUser?.id, contents, viewHistory);
+          return getContinueWatching(contents, viewHistory, currentUser?.id);
         case 'recently-viewed':
-          return getRecentlyViewed(currentUser?.id, contents, viewHistory);
+          return getRecentlyViewed(contents, viewHistory, currentUser?.id);
         default:
           return [];
       }
     }
-    return contents.filter((c) => c.categoryId === key);
+    return contents.filter((content) => content.categoryId === key);
   }, [key, isCollection, contents, ratings, viewHistory, currentUser]);
 
-  const watchCounts = useMemo(() => getWatchCounts(viewHistory), [viewHistory]);
-
+  const watchCounts = useMemo(() => buildWatchCountMap(viewHistory), [viewHistory]);
   const title = isCollection ? COLLECTION_TITLES[key as CollectionKey] : category?.name ?? 'Explore';
 
   if (!isCollection && !category) {
