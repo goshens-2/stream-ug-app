@@ -21,6 +21,7 @@ import { AdminContentTypesPage } from './pages/admin/AdminContentTypesPage';
 import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage';
 import { AdminRequestsPage } from './pages/admin/AdminRequestsPage';
 import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
+import { AdminUsersPage } from './pages/admin/AdminUsersPage';
 
 function App() {
   return (
@@ -52,6 +53,7 @@ function App() {
               <Route path="categories" element={<AdminCategoriesPage />} />
               <Route path="requests" element={<AdminRequestsPage />} />
               <Route path="analytics" element={<AdminAnalyticsPage />} />
+              <Route path="users" element={<AdminUsersPage />} />
             </Route>
           </Route>
         </Routes>

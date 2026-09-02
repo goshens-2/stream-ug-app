@@ -211,6 +211,13 @@ create policy "Users can view their own profile"
   on public.profiles for select using (auth.uid() = id);
 create policy "Users can update their own profile"
   on public.profiles for update using (auth.uid() = id);
+-- Lets an admin manage other users from the Admin Panel (e.g. promote a
+-- user to admin, or revoke admin access). `protect_profile_privileges()`
+-- above already guarantees a *non*-admin caller can never flip `is_admin`
+-- via this or any other update policy, so this is safe to combine with the
+-- "own profile" policy.
+create policy "Admins can update any profile"
+  on public.profiles for update using (public.is_admin()) with check (public.is_admin());
 -- Lets a signed-in user delete their own `profiles` row from "Delete
 -- Account" in Account Settings. Note: the anon/publishable key used by the
 -- frontend cannot delete the underlying `auth.users` row (that requires a
