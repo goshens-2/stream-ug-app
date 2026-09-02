@@ -40,6 +40,14 @@ export interface Content {
   watermark: WatermarkSettings;
   durationMinutes: number;
   releaseYear: number;
+  /** Display metadata entered by an admin; supports people discovery and richer search. */
+  director?: string;
+  cast?: string[];
+  genres?: string[];
+  language?: string;
+  ageRating?: string;
+  /** A vetted provider embed URL, used when no first-party streaming URL is available. */
+  embedUrl?: string;
   createdAt: string;
   updatedAt: string;
 }

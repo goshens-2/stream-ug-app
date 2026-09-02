@@ -115,9 +115,24 @@ create table if not exists public.content (
     check (watermark_position in ('top-left', 'top-right', 'bottom-left', 'bottom-right', 'center')),
   duration_minutes integer not null default 0,
   release_year integer,
+  director text,
+  cast text[] not null default '{}',
+  genres text[] not null default '{}',
+  language text,
+  age_rating text,
+  embed_url text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Kept separate so projects that ran an earlier version of this starter
+-- schema receive the richer catalog metadata too.
+alter table public.content add column if not exists director text;
+alter table public.content add column if not exists cast text[] not null default '{}';
+alter table public.content add column if not exists genres text[] not null default '{}';
+alter table public.content add column if not exists language text;
+alter table public.content add column if not exists age_rating text;
+alter table public.content add column if not exists embed_url text;
 
 -- Movie/content requests submitted by users, reviewed by admins.
 create table if not exists public.movie_requests (
