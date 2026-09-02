@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { Content, Rating, ViewHistoryEntry } from '../types';
 import { getAverageRating, getRecommendationsForUser } from './recommendations';
 import { getWatchCounts } from './analytics';
@@ -23,6 +24,39 @@ export const COLLECTION_TITLES: Record<CollectionKey, string> = {
 /** Ranks content by a blend of watch count and average rating, highest first. */
 export function getTrending(contents: Content[], ratings: Rating[], viewHistory: ViewHistoryEntry[]): Content[] {
   const watchCounts = getWatchCounts(viewHistory);
+=======
+import type { Category, Content, Rating, ViewHistoryEntry } from '../types';
+import { getMostWatched } from './analytics';
+import { getAverageRating, getRecommendationsForUser } from './recommendations';
+
+/** Well-known synthetic "collection" ids used for rows/pages that aren't a real Category. */
+export const FEATURED_COLLECTION_ID = 'featured';
+export const CONTINUE_WATCHING_COLLECTION_ID = 'continue-watching';
+export const RECOMMENDED_COLLECTION_ID = 'recommended';
+export const RECENTLY_VIEWED_COLLECTION_ID = 'recently-viewed';
+
+/** A lightweight, human-facing description of a homepage row/collection. */
+export interface Collection {
+  id: string;
+  name: string;
+}
+
+export const SYNTHETIC_COLLECTIONS: Record<string, Collection> = {
+  [FEATURED_COLLECTION_ID]: { id: FEATURED_COLLECTION_ID, name: 'Featured & Trending' },
+  [CONTINUE_WATCHING_COLLECTION_ID]: { id: CONTINUE_WATCHING_COLLECTION_ID, name: 'Continue Watching' },
+  [RECOMMENDED_COLLECTION_ID]: { id: RECOMMENDED_COLLECTION_ID, name: 'Recommended For You' },
+  [RECENTLY_VIEWED_COLLECTION_ID]: { id: RECENTLY_VIEWED_COLLECTION_ID, name: 'Recently Viewed' },
+};
+
+/** Builds a `contentId -> watch count` lookup from view history, for display on cards. */
+export function buildWatchCountMap(viewHistory: ViewHistoryEntry[]): Map<string, number> {
+  return new Map(getMostWatched(viewHistory).map((c) => [c.contentId, c.count]));
+}
+
+/** Content ranked by a blend of watch count and average rating, most popular first. */
+export function getFeaturedAndTrending(contents: Content[], viewHistory: ViewHistoryEntry[], ratings: Rating[]): Content[] {
+  const watchCounts = buildWatchCountMap(viewHistory);
+>>>>>>> origin/copilot/goshens-2stream-ug-app
   return contents
     .slice()
     .sort((a, b) => {
@@ -31,6 +65,7 @@ export function getTrending(contents: Content[], ratings: Rating[], viewHistory:
     });
 }
 
+<<<<<<< HEAD
 /** Ranks content purely by how many people have watched it, most-watched first. */
 export function getPopular(contents: Content[], viewHistory: ViewHistoryEntry[]): Content[] {
   const watchCounts = getWatchCounts(viewHistory);
@@ -61,6 +96,10 @@ export function getContinueWatching(
   viewHistory: ViewHistoryEntry[],
 ): Content[] {
   if (!userId) return [];
+=======
+/** Titles a signed-in user has started but not finished watching, most recent first. */
+export function getContinueWatching(contents: Content[], viewHistory: ViewHistoryEntry[], userId: string | undefined): Content[] {
+>>>>>>> origin/copilot/goshens-2stream-ug-app
   return viewHistory
     .filter((v) => v.userId === userId)
     .slice()
@@ -70,6 +109,7 @@ export function getContinueWatching(
     .filter((c): c is Content => Boolean(c));
 }
 
+<<<<<<< HEAD
 /** Everything a user has viewed, most recently updated first (regardless of completion). */
 export function getRecentlyViewed(
   userId: string | undefined,
@@ -77,6 +117,10 @@ export function getRecentlyViewed(
   viewHistory: ViewHistoryEntry[],
 ): Content[] {
   if (!userId) return [];
+=======
+/** Titles a signed-in user has viewed recently, most recent first. */
+export function getRecentlyViewed(contents: Content[], viewHistory: ViewHistoryEntry[], userId: string | undefined): Content[] {
+>>>>>>> origin/copilot/goshens-2stream-ug-app
   return viewHistory
     .filter((v) => v.userId === userId)
     .slice()
@@ -84,3 +128,24 @@ export function getRecentlyViewed(
     .map((v) => contents.find((c) => c.id === v.contentId))
     .filter((c): c is Content => Boolean(c));
 }
+<<<<<<< HEAD
+=======
+
+/** Recommended titles for a signed-in user, resolved to full `Content` records. */
+export function getRecommendedContent(
+  contents: Content[],
+  ratings: Rating[],
+  userId: string | undefined,
+  limit = 12,
+): Content[] {
+  if (!userId) return [];
+  return getRecommendationsForUser(userId, contents, ratings, limit)
+    .map((rec) => contents.find((c) => c.id === rec.contentId))
+    .filter((c): c is Content => Boolean(c));
+}
+
+/** Resolves a homepage row/collection id (real category or synthetic collection) to a display name. */
+export function resolveCollectionName(collectionId: string, categories: Category[]): string {
+  return SYNTHETIC_COLLECTIONS[collectionId]?.name ?? categories.find((c) => c.id === collectionId)?.name ?? 'Titles';
+}
+>>>>>>> origin/copilot/goshens-2stream-ug-app

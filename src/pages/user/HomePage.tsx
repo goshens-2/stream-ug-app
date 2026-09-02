@@ -4,6 +4,7 @@ import { CategoryRow } from '../../components/CategoryRow';
 import { ContentCard } from '../../components/ContentCard';
 import { TrailerMarquee } from '../../components/TrailerMarquee';
 import { getAverageRating } from '../../utils/recommendations';
+<<<<<<< HEAD
 import { getWatchCounts } from '../../utils/analytics';
 import {
   getContinueWatching,
@@ -12,13 +13,32 @@ import {
   getRecentlyViewed,
   getRecommended,
   getTrending,
+=======
+import {
+  buildWatchCountMap,
+  getContinueWatching,
+  getFeaturedAndTrending,
+  getRecentlyViewed,
+  getRecommendedContent,
+  CONTINUE_WATCHING_COLLECTION_ID,
+  FEATURED_COLLECTION_ID,
+  RECENTLY_VIEWED_COLLECTION_ID,
+  RECOMMENDED_COLLECTION_ID,
+>>>>>>> origin/copilot/goshens-2stream-ug-app
 } from '../../utils/collections';
 import type { Content } from '../../types';
 import './HomePage.css';
 
 type SortOption = 'trending' | 'newest' | 'top-rated' | 'title';
 
+<<<<<<< HEAD
 /** The main User Panel landing page: trailer marquee and horizontal movie rails. */
+=======
+/** Max number of titles shown per horizontal row before an "Explore more" card appears. */
+const ROW_LIMIT = 12;
+
+/** The main User Panel landing page: trailer marquee and category rows. */
+>>>>>>> origin/copilot/goshens-2stream-ug-app
 export function HomePage() {
   const { contents, categories, ratings, viewHistory, currentUser } = useAppState();
   const [genreFilter, setGenreFilter] = useState<string>('all');
@@ -27,6 +47,7 @@ export function HomePage() {
   const [yearFilter, setYearFilter] = useState('all');
   const [minimumRating, setMinimumRating] = useState('all');
 
+<<<<<<< HEAD
   const watchCounts = useMemo(() => getWatchCounts(viewHistory), [viewHistory]);
 
   const trending = useMemo(
@@ -51,6 +72,28 @@ export function HomePage() {
   const recentlyViewed = useMemo(
     () => getRecentlyViewed(currentUser?.id, contents, viewHistory),
     [currentUser, contents, viewHistory],
+=======
+  const watchCounts = useMemo(() => buildWatchCountMap(viewHistory), [viewHistory]);
+
+  const recommendedContent = useMemo(
+    () => getRecommendedContent(contents, ratings, currentUser?.id, ROW_LIMIT),
+    [contents, ratings, currentUser],
+  );
+
+  const continueWatching = useMemo(
+    () => getContinueWatching(contents, viewHistory, currentUser?.id),
+    [contents, viewHistory, currentUser],
+  );
+
+  const recentlyViewed = useMemo(
+    () => getRecentlyViewed(contents, viewHistory, currentUser?.id),
+    [contents, viewHistory, currentUser],
+  );
+
+  const featuredAndTrending = useMemo(
+    () => getFeaturedAndTrending(contents, viewHistory, ratings),
+    [contents, viewHistory, ratings],
+>>>>>>> origin/copilot/goshens-2stream-ug-app
   );
 
   const filteredAndSorted = useMemo(() => {
@@ -77,6 +120,7 @@ export function HomePage() {
         break;
     }
     return list;
+<<<<<<< HEAD
   }, [contents, genreFilter, languageFilter, yearFilter, minimumRating, sortOption, ratings, watchCounts]);
 
   const languages = useMemo(
@@ -84,6 +128,9 @@ export function HomePage() {
     [contents],
   );
   const years = useMemo(() => [...new Set(contents.map((content) => content.releaseYear))].sort((a, b) => b - a), [contents]);
+=======
+  }, [contents, genreFilter, sortOption, ratings, watchCounts]);
+>>>>>>> origin/copilot/goshens-2stream-ug-app
 
   return (
     <div className="home-page">
@@ -98,15 +145,22 @@ export function HomePage() {
 
       {trending.length > 0 && (
         <CategoryRow
+<<<<<<< HEAD
           category={{ id: 'trending', name: 'Trending Now', slug: 'trending' }}
           contents={trending}
           exploreMoreTo="/browse/explore/trending"
+=======
+          category={{ id: FEATURED_COLLECTION_ID, name: 'Featured & Trending' }}
+          contents={featuredAndTrending.slice(0, ROW_LIMIT)}
+          totalCount={featuredAndTrending.length}
+>>>>>>> origin/copilot/goshens-2stream-ug-app
           watchCounts={watchCounts}
         />
       )}
 
       {continueWatching.length > 0 && (
         <CategoryRow
+<<<<<<< HEAD
           category={{ id: 'continue-watching', name: 'Continue Watching', slug: 'continue-watching' }}
           contents={continueWatching}
           exploreMoreTo="/browse/explore/continue-watching"
@@ -119,12 +173,18 @@ export function HomePage() {
           category={{ id: 'popular', name: 'Popular on STREAM UG', slug: 'popular' }}
           contents={popular}
           exploreMoreTo="/browse/explore/popular"
+=======
+          category={{ id: CONTINUE_WATCHING_COLLECTION_ID, name: 'Continue Watching' }}
+          contents={continueWatching.slice(0, ROW_LIMIT)}
+          totalCount={continueWatching.length}
+>>>>>>> origin/copilot/goshens-2stream-ug-app
           watchCounts={watchCounts}
         />
       )}
 
       {recommendedContent.length > 0 && (
         <CategoryRow
+<<<<<<< HEAD
           category={{ id: 'recommended', name: 'Recommended For You', slug: 'recommended' }}
           contents={recommendedContent}
           exploreMoreTo="/browse/explore/recommended"
@@ -137,19 +197,31 @@ export function HomePage() {
           category={{ id: 'recently-added', name: 'Recently Added', slug: 'recently-added' }}
           contents={recentlyAdded}
           exploreMoreTo="/browse/explore/recently-added"
+=======
+          category={{ id: RECOMMENDED_COLLECTION_ID, name: 'Recommended For You' }}
+          contents={recommendedContent.slice(0, ROW_LIMIT)}
+          totalCount={recommendedContent.length}
+>>>>>>> origin/copilot/goshens-2stream-ug-app
           watchCounts={watchCounts}
         />
       )}
 
       {recentlyViewed.length > 0 && (
         <CategoryRow
+<<<<<<< HEAD
           category={{ id: 'recently-viewed', name: 'Recently Viewed', slug: 'recently-viewed' }}
           contents={recentlyViewed}
           exploreMoreTo="/browse/explore/recently-viewed"
+=======
+          category={{ id: RECENTLY_VIEWED_COLLECTION_ID, name: 'Recently Viewed' }}
+          contents={recentlyViewed.slice(0, ROW_LIMIT)}
+          totalCount={recentlyViewed.length}
+>>>>>>> origin/copilot/goshens-2stream-ug-app
           watchCounts={watchCounts}
         />
       )}
 
+<<<<<<< HEAD
       {categories.map((category) => (
         <CategoryRow
           key={category.id}
@@ -159,6 +231,20 @@ export function HomePage() {
           watchCounts={watchCounts}
         />
       ))}
+=======
+      {categories.map((category) => {
+        const categoryContent = contents.filter((c) => c.categoryId === category.id);
+        return (
+          <CategoryRow
+            key={category.id}
+            category={category}
+            contents={categoryContent.slice(0, ROW_LIMIT)}
+            totalCount={categoryContent.length}
+            watchCounts={watchCounts}
+          />
+        );
+      })}
+>>>>>>> origin/copilot/goshens-2stream-ug-app
 
       <section className="home-page__browse-all">
         <div className="home-page__browse-all-header">
