@@ -330,6 +330,14 @@ export const notifications: Notification[] = [
   },
 ];
 
+/**
+ * Reserved email for the app's admin account. Signing in with this email
+ * (mock mode) or having this email's Supabase profile flagged `is_admin`
+ * (Supabase mode) routes into the Admin Panel — see the "Admin access"
+ * section of the README.
+ */
+export const ADMIN_EMAIL = 'admin@stream.com';
+
 /** Sample users. */
 export const users: User[] = [
   {
@@ -343,10 +351,27 @@ export const users: User[] = [
     name: 'Brian Okello',
     email: 'brian@example.com',
   },
+  {
+    id: 'user-admin',
+    name: 'Admin',
+    email: ADMIN_EMAIL,
+    isAdmin: true,
+  },
 ];
 
-/** Sample login credentials, one per user. */
+/**
+ * Sample login credentials, one per user (mock mode only; Supabase mode uses
+ * Supabase Auth instead — see README).
+ *
+ * The admin account's password is intentionally *not* hardcoded here. Set
+ * `VITE_MOCK_ADMIN_PASSWORD` in your `.env` (see `.env.example`) to bootstrap
+ * a local password for `admin@stream.com`; without it, the mock admin
+ * account has no usable password and can't be logged into.
+ */
 export const accounts: Account[] = [
   { id: 'acct-1', userId: 'user-1', email: 'aisha@example.com', password: 'password123' },
   { id: 'acct-2', userId: 'user-2', email: 'brian@example.com', password: 'brianpass' },
+  ...(import.meta.env.VITE_MOCK_ADMIN_PASSWORD
+    ? [{ id: 'acct-admin', userId: 'user-admin', email: ADMIN_EMAIL, password: import.meta.env.VITE_MOCK_ADMIN_PASSWORD }]
+    : []),
 ];

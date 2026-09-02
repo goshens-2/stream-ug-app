@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
+  ADMIN_EMAIL,
   accounts as initialAccounts,
   categories as initialCategories,
   contentTypes as initialContentTypes,
@@ -237,6 +238,14 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
     if (accounts.some((a) => a.email.toLowerCase() === normalizedEmail)) {
       return { success: false, error: 'An account with that email already exists.' };
+    }
+    if (normalizedEmail === ADMIN_EMAIL.toLowerCase()) {
+      return {
+        success: false,
+        error:
+          'This email is reserved for the admin account. Set VITE_MOCK_ADMIN_PASSWORD in your .env ' +
+          'to enable admin login (see README), or sign up with a different email.',
+      };
     }
     const id = `user-${Date.now()}`;
     const newUser: User = {
