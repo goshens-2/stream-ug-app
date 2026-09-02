@@ -23,6 +23,9 @@ export function HomePage() {
   const { contents, categories, ratings, viewHistory, currentUser } = useAppState();
   const [genreFilter, setGenreFilter] = useState<string>('all');
   const [sortOption, setSortOption] = useState<SortOption>('trending');
+  const [languageFilter, setLanguageFilter] = useState('all');
+  const [yearFilter, setYearFilter] = useState('all');
+  const [minimumRating, setMinimumRating] = useState('all');
 
   const watchCounts = useMemo(() => getWatchCounts(viewHistory), [viewHistory]);
 
@@ -52,6 +55,11 @@ export function HomePage() {
 
   const filteredAndSorted = useMemo(() => {
     let list: Content[] = genreFilter === 'all' ? contents : contents.filter((c) => c.categoryId === genreFilter);
+    if (languageFilter !== 'all') list = list.filter((content) => content.language === languageFilter);
+    if (yearFilter !== 'all') list = list.filter((content) => content.releaseYear === Number(yearFilter));
+    if (minimumRating !== 'all') {
+      list = list.filter((content) => getAverageRating(content.id, ratings) >= Number(minimumRating));
+    }
     list = list.slice();
     switch (sortOption) {
       case 'newest':
@@ -69,7 +77,13 @@ export function HomePage() {
         break;
     }
     return list;
-  }, [contents, genreFilter, sortOption, ratings, watchCounts]);
+  }, [contents, genreFilter, languageFilter, yearFilter, minimumRating, sortOption, ratings, watchCounts]);
+
+  const languages = useMemo(
+    () => [...new Set(contents.map((content) => content.language).filter((language): language is string => Boolean(language)))].sort(),
+    [contents],
+  );
+  const years = useMemo(() => [...new Set(contents.map((content) => content.releaseYear))].sort((a, b) => b - a), [contents]);
 
   return (
     <div className="home-page">
@@ -168,6 +182,29 @@ export function HomePage() {
                 <option value="newest">Newest</option>
                 <option value="top-rated">Top Rated</option>
                 <option value="title">Title (A-Z)</option>
+              </select>
+            </label>
+            <label>
+              Language
+              <select value={languageFilter} onChange={(e) => setLanguageFilter(e.target.value)}>
+                <option value="all">All languages</option>
+                {languages.map((language) => <option key={language} value={language}>{language}</option>)}
+              </select>
+            </label>
+            <label>
+              Year
+              <select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>
+                <option value="all">All years</option>
+                {years.map((year) => <option key={year} value={year}>{year}</option>)}
+              </select>
+            </label>
+            <label>
+              User rating
+              <select value={minimumRating} onChange={(e) => setMinimumRating(e.target.value)}>
+                <option value="all">Any rating</option>
+                <option value="4">4 stars and up</option>
+                <option value="3">3 stars and up</option>
+                <option value="2">2 stars and up</option>
               </select>
             </label>
           </div>

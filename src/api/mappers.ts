@@ -45,6 +45,12 @@ export interface ContentRow {
   watermark_position: WatermarkSettings['position'];
   duration_minutes: number;
   release_year: number | null;
+  director: string | null;
+  cast: string[] | null;
+  genres: string[] | null;
+  language: string | null;
+  age_rating: string | null;
+  embed_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -127,6 +133,12 @@ export function mapContentRow(row: ContentRow): Content {
     },
     durationMinutes: row.duration_minutes,
     releaseYear: row.release_year ?? new Date().getFullYear(),
+    director: row.director ?? undefined,
+    cast: row.cast ?? undefined,
+    genres: row.genres ?? undefined,
+    language: row.language ?? undefined,
+    ageRating: row.age_rating ?? undefined,
+    embedUrl: row.embed_url ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -148,6 +160,12 @@ export function mapContentToRow(content: Content): Omit<ContentRow, 'created_at'
     watermark_position: content.watermark.position,
     duration_minutes: content.durationMinutes,
     release_year: content.releaseYear,
+    director: content.director || null,
+    cast: content.cast?.filter(Boolean) ?? [],
+    genres: content.genres?.filter(Boolean) ?? [],
+    language: content.language || null,
+    age_rating: content.ageRating || null,
+    embed_url: content.embedUrl || null,
   };
 }
 

@@ -20,7 +20,11 @@ export function SearchResultsPage() {
       return (
         c.title.toLowerCase().includes(q) ||
         c.description.toLowerCase().includes(q) ||
-        category?.name.toLowerCase().includes(q)
+        category?.name.toLowerCase().includes(q) ||
+        c.director?.toLowerCase().includes(q) ||
+        c.cast?.some((person) => person.toLowerCase().includes(q)) ||
+        c.genres?.some((genre) => genre.toLowerCase().includes(q)) ||
+        c.language?.toLowerCase().includes(q)
       );
     });
   }, [query, contents, categories]);

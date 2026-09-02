@@ -29,6 +29,12 @@ export function AdminContentFormPage() {
   const [posterUrl, setPosterUrl] = useState(existing?.posterUrl ?? '');
   const [durationMinutes, setDurationMinutes] = useState(existing?.durationMinutes ?? 0);
   const [releaseYear, setReleaseYear] = useState(existing?.releaseYear ?? new Date().getFullYear());
+  const [director, setDirector] = useState(existing?.director ?? '');
+  const [cast, setCast] = useState(existing?.cast?.join(', ') ?? '');
+  const [genres, setGenres] = useState(existing?.genres?.join(', ') ?? '');
+  const [language, setLanguage] = useState(existing?.language ?? '');
+  const [ageRating, setAgeRating] = useState(existing?.ageRating ?? '');
+  const [embedUrl, setEmbedUrl] = useState(existing?.embedUrl ?? '');
   const [watermark, setWatermark] = useState<WatermarkSettings>(existing?.watermark ?? emptyWatermark);
 
   const handleSubmit = (event: React.FormEvent) => {
@@ -48,6 +54,12 @@ export function AdminContentFormPage() {
         posterUrl: posterUrl || 'https://picsum.photos/seed/new-content/400/560',
         durationMinutes,
         releaseYear,
+        director: director.trim() || undefined,
+        cast: cast.split(',').map((name) => name.trim()).filter(Boolean),
+        genres: genres.split(',').map((genre) => genre.trim()).filter(Boolean),
+        language: language.trim() || undefined,
+        ageRating: ageRating.trim() || undefined,
+        embedUrl: embedUrl.trim() || undefined,
         watermark: watermarkSettings,
         updatedAt: now,
       });
@@ -62,6 +74,12 @@ export function AdminContentFormPage() {
         posterUrl: posterUrl || 'https://picsum.photos/seed/new-content/400/560',
         durationMinutes,
         releaseYear,
+        director: director.trim() || undefined,
+        cast: cast.split(',').map((name) => name.trim()).filter(Boolean),
+        genres: genres.split(',').map((genre) => genre.trim()).filter(Boolean),
+        language: language.trim() || undefined,
+        ageRating: ageRating.trim() || undefined,
+        embedUrl: embedUrl.trim() || undefined,
         watermark: watermarkSettings,
       });
     }
@@ -131,6 +149,32 @@ export function AdminContentFormPage() {
             />
           </label>
         </div>
+        <div className="admin-content-form__row">
+          <label>
+            Director
+            <input value={director} onChange={(e) => setDirector(e.target.value)} placeholder="Director name" />
+          </label>
+          <label>
+            Language
+            <input value={language} onChange={(e) => setLanguage(e.target.value)} placeholder="English, Luganda…" />
+          </label>
+          <label>
+            Age Rating
+            <input value={ageRating} onChange={(e) => setAgeRating(e.target.value)} placeholder="PG-13, 18…" />
+          </label>
+        </div>
+        <label>
+          Cast (comma-separated)
+          <input value={cast} onChange={(e) => setCast(e.target.value)} placeholder="Actor One, Actor Two" />
+        </label>
+        <label>
+          Genres (comma-separated)
+          <input value={genres} onChange={(e) => setGenres(e.target.value)} placeholder="Action, Drama" />
+        </label>
+        <label>
+          Approved video embed URL (optional)
+          <input value={embedUrl} onChange={(e) => setEmbedUrl(e.target.value)} placeholder="https://www.youtube.com/embed/..." />
+        </label>
 
         <fieldset className="admin-content-form__watermark">
           <legend>Watermark Settings</legend>

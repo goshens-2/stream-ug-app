@@ -20,7 +20,12 @@ export function Navbar() {
 
   const searchMatches =
     searchTerm.trim().length > 0
-      ? contents.filter((c) => c.title.toLowerCase().includes(searchTerm.trim().toLowerCase())).slice(0, 6)
+      ? contents.filter((c) => {
+        const query = searchTerm.trim().toLowerCase();
+        return c.title.toLowerCase().includes(query) ||
+          c.director?.toLowerCase().includes(query) ||
+          c.cast?.some((person) => person.toLowerCase().includes(query));
+      }).slice(0, 6)
       : [];
 
   useEffect(() => {
@@ -62,7 +67,7 @@ export function Navbar() {
               setSearchOpen(true);
             }}
             onFocus={() => setSearchOpen(true)}
-            placeholder="Search movies, shows, genres…"
+            placeholder="Search titles, actors, directors…"
             aria-label="Search STREAM UG"
           />
         </form>
