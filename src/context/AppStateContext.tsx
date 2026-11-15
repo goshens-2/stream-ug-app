@@ -128,12 +128,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [authLoading, setAuthLoading] = useState<boolean>(isSupabaseConfigured);
 
-  // When Supabase is configured (VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY),
-  // replace the mock data with live data from the database. Without those
-  // env vars, the API layer resolves with the same mock data, so this is a
-  // no-op and the app behaves exactly as before.
+  // Load database-backed app data only after a Supabase user session exists.
+  // The catalog and personal records are protected by authenticated RLS policies.
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
+    if (!isSupabaseConfigured || !session?.user.id) return;
     let cancelled = false;
 
     void fetchContents().then((data) => !cancelled && setContents(data));
@@ -157,7 +155,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [session?.user.id]);
 
   // Auth: when Supabase is configured, hydrate the session from Supabase Auth
   // (instead of the mock `accounts`/`users` arrays) and keep it in sync via
