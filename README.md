@@ -74,23 +74,29 @@ working out of the box for local development without a Supabase project.
 
 ## Admin access
 
-The app reserves `admin@stream.com` as the admin login. How you set its
-password depends on whether Supabase is connected:
+The app reserves `admin.streamug@gmail.com` as the admin login email. This is
+an application sign-in address; create the actual Gmail mailbox separately
+through Google's account-creation process if you want to receive email there.
 
-- **With Supabase connected (recommended):** sign up normally with
-  `admin@stream.com` through the app's Sign Up page (this lets *you* choose
-  the password — it's never stored in source), then run step 5 above
-  (`update public.profiles set is_admin = true where email = 'admin@stream.com';`)
-  to grant it Admin Panel access.
-- **Without Supabase (mock/local-dev mode):** set `VITE_MOCK_ADMIN_PASSWORD`
-  in your `.env` (copy `.env.example` if you haven't) to bootstrap a local
-  password for `admin@stream.com`, then restart `npm run dev`. Without this
-  variable set, the mock admin account has no usable password and can't be
-  logged into — no admin password is ever hardcoded in source
-  (see `src/data/mockData.ts`).
+- **With Supabase connected (recommended):** create the Gmail mailbox first,
+  then sign up through the app using `admin.streamug@gmail.com` and a password
+  you choose. Verify the email if Supabase email confirmation is enabled.
+  Then run this in the Supabase SQL editor to grant the account admin access:
 
-Either way, once `admin@stream.com` is signed in it lands in the Admin Panel
-because its `isAdmin`/`is_admin` flag is `true`.
+  ```sql
+  update public.profiles
+  set is_admin = true
+  where email = 'admin.streamug@gmail.com';
+  ```
+
+  The admin flag is stored in the database; the frontend email alone does not
+  grant dashboard permissions. After the profile is promoted, sign out and
+  sign back in. The account will open the Admin Dashboard.
+
+- **Without Supabase (mock/local-development mode):** set
+  `VITE_MOCK_ADMIN_PASSWORD` in your local, git-ignored `.env` file to a
+  password you choose, then restart the development server. Do not put a real
+  password in source control or commit it.
 
 ## Project structure
 
