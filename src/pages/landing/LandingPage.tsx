@@ -58,20 +58,7 @@ export function LandingPage() {
       </header>
 
       <main className="landing-page__hero">
-        <h1>Movies, series &amp; more — streamed on the web</h1>
-        <p>
-          STREAM UG is a browser-based streaming web app. Watch translated and
-          non-translated movies, local music, cartoons, sports analysis, soaps,
-          news, and much more — no download required, just open your browser.
-        </p>
-        <div className="landing-page__actions">
-          <Link to="/signup" className="landing-page__cta">
-            Get Started
-          </Link>
-          <Link to="/login" className="landing-page__cta-secondary">
-            Log In
-          </Link>
-        </div>
+        <h1>Movies, series &amp; more - on stream.</h1>
 
         <section
           className="landing-page__slideshow"
@@ -101,6 +88,15 @@ export function LandingPage() {
             ))}
           </div>
         </section>
+
+        <div className="landing-page__actions">
+          <Link to="/signup" className="landing-page__cta">
+            Get Started
+          </Link>
+          <Link to="/login" className="landing-page__cta-secondary">
+            Log In
+          </Link>
+        </div>
       </main>
 
       <footer className="landing-page__footer">
