@@ -1,18 +1,49 @@
+import { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAppState } from '../../context/AppStateContext';
 import './LandingPage.css';
 
-/**
- * Public entry point for the STREAM UG web app. Introduces the site to
- * first-time visitors and links to the Login/Signup pages. Signed-in
- * visitors are redirected straight to the browse page.
- */
+const featuredSlides = [
+  {
+    eyebrow: 'EXPLORE THE GENRES',
+    title: 'Action & Adventure',
+    description: 'Big moments, bold heroes and thrilling stories.',
+  },
+  {
+    eyebrow: 'FIND YOUR NEXT STORY',
+    title: 'Drama & Romance',
+    description: 'Emotional stories and unforgettable connections.',
+  },
+  {
+    eyebrow: 'GOOD TIMES START HERE',
+    title: 'Comedy & Family',
+    description: 'Feel-good entertainment for everyone.',
+  },
+  {
+    eyebrow: 'YOUR NEXT FAVOURITE IS WAITING',
+    title: 'Discover more on STREAM',
+    description: 'Explore the collection and find something to watch.',
+    isCta: true,
+  },
+];
+
 export function LandingPage() {
   const { isAuthenticated } = useAppState();
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    const slideTimer = window.setInterval(() => {
+      setActiveSlide((current) => (current + 1) % featuredSlides.length);
+    }, 3500);
+
+    return () => window.clearInterval(slideTimer);
+  }, []);
 
   if (isAuthenticated) {
     return <Navigate to="/browse" replace />;
   }
+
+  const slide = featuredSlides[activeSlide];
 
   return (
     <div className="landing-page">
@@ -41,9 +72,35 @@ export function LandingPage() {
             Log In
           </Link>
         </div>
-        <p className="landing-page__hint">
-          Already have an account? Log in to start watching.
-        </p>
+
+        <section
+          className="landing-page__slideshow"
+          aria-label="Featured streaming categories"
+          aria-live="polite"
+        >
+          <div className="landing-page__slide" key={slide.title}>
+            <span className="landing-page__slide-eyebrow">{slide.eyebrow}</span>
+            <h2>{slide.title}</h2>
+            <p>{slide.description}</p>
+            {slide.isCta && (
+              <Link to="/signup" className="landing-page__slide-link">
+                Get started <span aria-hidden="true">→</span>
+              </Link>
+            )}
+          </div>
+          <div className="landing-page__slide-dots" aria-label="Choose a slide">
+            {featuredSlides.map((item, index) => (
+              <button
+                key={item.title}
+                type="button"
+                className={index === activeSlide ? 'is-active' : ''}
+                aria-label={`Show slide ${index + 1}: ${item.title}`}
+                aria-pressed={index === activeSlide}
+                onClick={() => setActiveSlide(index)}
+              />
+            ))}
+          </div>
+        </section>
       </main>
 
       <footer className="landing-page__footer">
