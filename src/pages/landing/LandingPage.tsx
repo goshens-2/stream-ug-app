@@ -100,7 +100,7 @@ export function LandingPage() {
       </main>
 
       <footer className="landing-page__footer">
-        <p>STREAM UG — a web app for streaming, built with React &amp; TypeScript.</p>
+        <p>STREAM UG — Engineered with VISION.</p>
       </footer>
     </div>
   );
