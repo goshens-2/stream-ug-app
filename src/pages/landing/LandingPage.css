@@ -45,7 +45,7 @@
   flex: 1;
   max-width: 720px;
   margin: 0 auto;
-  padding: 4rem 1.5rem 3rem;
+  padding: 3rem 1.5rem 3rem;
   text-align: center;
 }
 
@@ -91,7 +91,7 @@
   position: relative;
   max-width: 620px;
   min-height: 168px;
-  margin: 2rem auto 0;
+  margin: 1.5rem auto 0;
   padding: 1.5rem 1.5rem 2.25rem;
   overflow: hidden;
   text-align: left;
