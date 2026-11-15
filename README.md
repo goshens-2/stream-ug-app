@@ -45,7 +45,7 @@ The app already has the STREAM UG project URL and public publishable key configu
    frontend) — e.g. `update public.profiles set is_admin = true where email = 'you@example.com';`.
 6. Restart `npm run dev`.
 
-When the env vars are set:
+When Supabase is configured:
 - `src/context/AppStateContext.tsx` loads content, categories, content types,
   movie requests, ratings, favorites, view history, search logs, and
   notifications from Supabase via the data-access layer in `src/api/`, and
@@ -69,9 +69,10 @@ When the env vars are set:
   `Navbar`) and via Supabase RLS policies, so it can't be bypassed from the
   browser.
 
-Without the env vars, everything falls back to the mock data/mock auth in
-`src/data/mockData.ts` and `src/context/AppStateContext.tsx`, so the app keeps
-working out of the box for local development without a Supabase project.
+The connected Supabase project starts with the STREAM UG content categories
+and content types preloaded. Its content catalogue is intentionally empty:
+add only media that STREAM UG has the rights to distribute. The frontend
+loads database content after a user signs in.
 
 ## Admin access
 
