@@ -356,7 +356,7 @@ export const notifications: Notification[] = [
  * (Supabase mode) routes into the Admin Panel — see the "Admin access"
  * section of the README.
  */
-export const ADMIN_EMAIL = 'admin@stream.com';
+export const ADMIN_EMAIL = 'admin.streamug@gmail.com';
 
 /** Sample users. */
 export const users: User[] = [
@@ -385,7 +385,7 @@ export const users: User[] = [
  *
  * The admin account's password is intentionally *not* hardcoded here. Set
  * `VITE_MOCK_ADMIN_PASSWORD` in your `.env` (see `.env.example`) to bootstrap
- * a local password for `admin@stream.com`; without it, the mock admin
+ * a local password for `admin.streamug@gmail.com`; without it, the mock admin
  * account has no usable password and can't be logged into.
  */
 export const accounts: Account[] = [
