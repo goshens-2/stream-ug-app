@@ -46,25 +46,6 @@ export function LandingPage() {
         </p>
       </main>
 
-      <section className="landing-page__panels">
-        <article className="landing-page__panel">
-          <h2>User Panel</h2>
-          <p>
-            Browse content by category, watch trailers and full videos, rate
-            what you watch, and get personalised recommendations — all from
-            your web browser.
-          </p>
-        </article>
-        <article className="landing-page__panel">
-          <h2>Admin Panel</h2>
-          <p>
-            Upload and manage content, organise content types and categories,
-            and review movie requests submitted by users, through a dedicated
-            web dashboard.
-          </p>
-        </article>
-      </section>
-
       <footer className="landing-page__footer">
         <p>STREAM UG — a web app for streaming, built with React &amp; TypeScript.</p>
       </footer>
