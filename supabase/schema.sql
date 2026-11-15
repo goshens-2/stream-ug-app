@@ -13,6 +13,9 @@
 -- Enable UUID generation.
 create extension if not exists "pgcrypto";
 
+-- Keep the SECURITY DEFINER admin helper outside the exposed Data API schema.
+create schema if not exists private;
+
 -- Profiles: one row per authenticated user, linked 1:1 to Supabase Auth users.
 create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
@@ -32,7 +35,7 @@ create table if not exists public.profiles (
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
-security definer set search_path = public
+security definer set search_path = ''
 as $$
 begin
   insert into public.profiles (id, name, email)
@@ -53,13 +56,13 @@ create trigger on_auth_user_created
 
 -- Helper used by RLS policies below to check the caller's admin flag without
 -- recursively re-evaluating the `profiles` RLS policy for that lookup.
-create or replace function public.is_admin()
+create or replace function private.is_admin()
 returns boolean
 language sql
-security definer set search_path = public
+security definer set search_path = ''
 stable
 as $$
-  select coalesce((select is_admin from public.profiles where id = auth.uid()), false);
+  select coalesce((select p.is_admin from public.profiles p where p.id = (select auth.uid())), false);
 $$;
 
 -- Prevents a non-admin user from granting themselves admin access through
@@ -68,10 +71,10 @@ $$;
 create or replace function public.protect_profile_privileges()
 returns trigger
 language plpgsql
-security definer set search_path = public
+security definer set search_path = ''
 as $$
 begin
-  if not public.is_admin() then
+  if not private.is_admin() then
     new.is_admin := old.is_admin;
   end if;
   return new;
@@ -116,7 +119,7 @@ create table if not exists public.content (
   duration_minutes integer not null default 0,
   release_year integer,
   director text,
-  cast text[] not null default '{}',
+  "cast" text[] not null default '{}',
   genres text[] not null default '{}',
   language text,
   age_rating text,
@@ -232,7 +235,7 @@ create policy "Users can update their own profile"
 -- via this or any other update policy, so this is safe to combine with the
 -- "own profile" policy.
 create policy "Admins can update any profile"
-  on public.profiles for update using (public.is_admin()) with check (public.is_admin());
+  on public.profiles for update using (private.is_admin()) with check (private.is_admin());
 -- Lets a signed-in user delete their own `profiles` row from "Delete
 -- Account" in Account Settings. Note: the anon/publishable key used by the
 -- frontend cannot delete the underlying `auth.users` row (that requires a
@@ -241,16 +244,16 @@ create policy "Admins can update any profile"
 create policy "Users can delete their own profile"
   on public.profiles for delete using (auth.uid() = id);
 create policy "Admins can view all profiles"
-  on public.profiles for select using (public.is_admin());
+  on public.profiles for select using (private.is_admin());
 
 create policy "Users can view their own requests"
   on public.movie_requests for select using (auth.uid() = requested_by);
 create policy "Users can create their own requests"
   on public.movie_requests for insert with check (auth.uid() = requested_by);
 create policy "Admins can view all requests"
-  on public.movie_requests for select using (public.is_admin());
+  on public.movie_requests for select using (private.is_admin());
 create policy "Admins can update requests"
-  on public.movie_requests for update using (public.is_admin());
+  on public.movie_requests for update using (private.is_admin());
 
 create policy "Users can view their own ratings"
   on public.ratings for select using (auth.uid() = user_id);
@@ -265,29 +268,46 @@ create policy "Users can manage their own favorites"
 create policy "Users can manage their own view history"
   on public.view_history for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "Admins can view all view history"
-  on public.view_history for select using (public.is_admin());
+  on public.view_history for select using (private.is_admin());
 
 create policy "Users can create their own search logs"
   on public.search_logs for insert with check (auth.uid() = user_id or user_id is null);
 create policy "Users can view their own search logs"
   on public.search_logs for select using (auth.uid() = user_id);
 create policy "Admins can view all search logs"
-  on public.search_logs for select using (public.is_admin());
+  on public.search_logs for select using (private.is_admin());
 
 create policy "Users can view their own notifications"
   on public.notifications for select using (auth.uid() = user_id);
 create policy "Users can update their own notifications"
   on public.notifications for update using (auth.uid() = user_id);
 create policy "Admins can manage all notifications"
-  on public.notifications for all using (public.is_admin()) with check (public.is_admin());
+  on public.notifications for all using (private.is_admin()) with check (private.is_admin());
 
 -- Admins (rows in `profiles` with `is_admin = true`) can manage the catalog.
 -- The `is_admin` flag itself is only ever set from the Supabase
 -- dashboard/SQL editor (service_role), never by the frontend, so this is a
 -- trusted, database-backed permission check rather than a client-side one.
 create policy "Admins can manage content types"
-  on public.content_types for all using (public.is_admin()) with check (public.is_admin());
+  on public.content_types for all using (private.is_admin()) with check (private.is_admin());
 create policy "Admins can manage categories"
-  on public.categories for all using (public.is_admin()) with check (public.is_admin());
+  on public.categories for all using (private.is_admin()) with check (private.is_admin());
 create policy "Admins can manage content"
-  on public.content for all using (public.is_admin()) with check (public.is_admin());
+  on public.content for all using (private.is_admin()) with check (private.is_admin());
+
+
+-- Explicit Data API grants for the authenticated frontend role.
+grant usage on schema public to authenticated;
+grant select, update, delete on public.profiles to authenticated;
+grant select, insert, update, delete on public.content_types, public.categories, public.content to authenticated;
+grant select, insert, update on public.movie_requests, public.ratings to authenticated;
+grant select, insert, update, delete on public.favorites, public.view_history to authenticated;
+grant select, insert on public.search_logs to authenticated;
+grant select, insert, update, delete on public.notifications to authenticated;
+
+-- The admin helper is used only by RLS and lives in a non-exposed schema.
+grant usage on schema private to authenticated;
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
+revoke execute on function public.protect_profile_privileges() from public, anon, authenticated;
+revoke execute on function private.is_admin() from public, anon;
+grant execute on function private.is_admin() to authenticated;
