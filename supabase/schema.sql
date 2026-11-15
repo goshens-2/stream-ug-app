@@ -102,6 +102,30 @@ create table if not exists public.categories (
 );
 
 -- Content: the core streamable items (movies, episodes, videos, etc).
+insert into public.content_types (name, description) values
+  ('Movie', 'Standalone feature film'),
+  ('Series', 'Multi-episode show'),
+  ('Music Video', 'Short-form music content'),
+  ('Documentary', 'Non-fiction documentary'),
+  ('TV Show', 'Television programme')
+on conflict (name) do update set description = excluded.description;
+
+insert into public.categories (name, slug) values
+  ('Translated Movies', 'translated-movies'),
+  ('Local Music Videos / Audios', 'local-music'),
+  ('Comedy Shows', 'comedy-shows'),
+  ('Cartoons', 'cartoons'),
+  ('Sports & Football Analysis', 'sports-football-analysis'),
+  ('Non-translated Movies', 'non-translated-movies'),
+  ('Anime', 'anime'),
+  ('Campus Entertainment', 'campus-entertainment'),
+  ('Local Soaps / Series', 'local-soaps-series'),
+  ('News', 'news'),
+  ('Talk Shows', 'talk-shows'),
+  ('Nigerian & Indian & Korean & Chinese Movies', 'international-movies'),
+  ('Telenovelas', 'telenovelas')
+on conflict (slug) do update set name = excluded.name;
+
 create table if not exists public.content (
   id uuid primary key default gen_random_uuid(),
   title text not null,
@@ -296,6 +320,11 @@ create policy "Admins can manage content"
   on public.content for all using (private.is_admin()) with check (private.is_admin());
 
 
+-- Remove Supabase's broad default table grants, then grant only what the app needs.
+revoke all on all tables in schema public from anon;
+revoke all on all tables in schema public from authenticated;
+revoke all on schema public from anon;
+
 -- Explicit Data API grants for the authenticated frontend role.
 grant usage on schema public to authenticated;
 grant select, update, delete on public.profiles to authenticated;
@@ -311,3 +340,19 @@ revoke execute on function public.handle_new_user() from public, anon, authentic
 revoke execute on function public.protect_profile_privileges() from public, anon, authenticated;
 revoke execute on function private.is_admin() from public, anon;
 grant execute on function private.is_admin() to authenticated;
+
+-- Index foreign-key columns used by joins, deletes, and user-scoped lookups.
+create index if not exists content_category_id_idx on public.content(category_id);
+create index if not exists content_content_type_id_idx on public.content(content_type_id);
+create index if not exists favorites_content_id_idx on public.favorites(content_id);
+create index if not exists movie_requests_fulfilled_content_id_idx on public.movie_requests(fulfilled_content_id);
+create index if not exists movie_requests_requested_by_idx on public.movie_requests(requested_by);
+create index if not exists notifications_content_id_idx on public.notifications(content_id);
+create index if not exists notifications_user_id_idx on public.notifications(user_id);
+create index if not exists ratings_user_id_idx on public.ratings(user_id);
+create index if not exists search_logs_matched_content_id_idx on public.search_logs(matched_content_id);
+create index if not exists search_logs_user_id_idx on public.search_logs(user_id);
+create index if not exists view_history_content_id_idx on public.view_history(content_id);
+
+alter default privileges in schema public revoke all on tables from anon;
+alter default privileges in schema public revoke all on tables from authenticated;
