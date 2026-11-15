@@ -37,37 +37,43 @@ export function LoginPage() {
   };
 
   return (
-    <div className="auth-page">
-      <h1>Log In</h1>
-      <form className="auth-page__form" onSubmit={handleSubmit}>
-        <label>
-          Email
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            required
-          />
-        </label>
-        <label>
-          Password
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Your password"
-            required
-          />
-        </label>
-        {error && <p className="auth-page__error">{error}</p>}
-        <button type="submit" disabled={submitting}>
-          {submitting ? 'Logging In…' : 'Log In'}
-        </button>
-      </form>
-      <p className="auth-page__switch">
-        Don't have an account? <Link to="/signup">Sign up</Link>
-      </p>
+    <div className="auth-page-shell">
+      <main className="auth-page">
+        <h1>Log In</h1>
+        <form className="auth-page__form" onSubmit={handleSubmit}>
+          <label>
+            Email
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              required
+            />
+          </label>
+          <label>
+            Password
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Your password"
+              required
+            />
+          </label>
+          {error && <p className="auth-page__error">{error}</p>}
+          <button type="submit" disabled={submitting}>
+            {submitting ? 'Logging In…' : 'Log In'}
+          </button>
+        </form>
+        <p className="auth-page__switch">
+          Don't have an account? <Link to="/signup">Sign up</Link>
+        </p>
+      </main>
+
+      <footer className="auth-page__footer">
+        <p>STREAM UG — Engineered with VISION.</p>
+      </footer>
     </div>
   );
 }
