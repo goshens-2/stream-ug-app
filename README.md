@@ -19,13 +19,15 @@ npm run lint     # lint with oxlint
 
 ## Connecting Supabase
 
+The app connects to the STREAM UG Supabase project (`bwzbtwclfvdgezyqvswr`) for persistent storage and authentication, or can run in mock mode when the environment variables are absent. It uses the public publishable key in the browser; never use a service-role/secret key in frontend code.
+
 The app can run entirely on mock data, or connect to a real
 [Supabase](https://supabase.com) project for persistent storage and auth:
 
 1. Copy `.env.example` to `.env`.
 2. In your Supabase project dashboard, go to **Project Settings → API** and
-   copy the **Project URL** and **anon public** (or **publishable**) key into
-   `.env` as `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
+   copy the **Project URL** and ****publishable** key into
+   `.env` as `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`.
    `VITE_SUPABASE_URL` must be the **base project URL**
    (e.g. `https://xxxxxxxx.supabase.co`) — do **not** append `/rest/v1/` or
    any other API path to it; the Supabase client library adds that itself.
@@ -60,7 +62,7 @@ When the env vars are set:
   flag are loaded from the `profiles` table (see `src/api/profileApi.ts`).
   Changing username/password and deleting the account (from Account
   Settings) also go through `profileApi.ts`/Supabase Auth. Note: deleting an
-  account only removes the `profiles` row from the client (the anon key
+  account only removes the `profiles` row from the client (the publishable key
   can't delete `auth.users`); pair this with a periodic backend job if you
   need full `auth.users` cleanup.
 - The Admin Panel routes/nav link are only shown to users whose profile has
