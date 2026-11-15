@@ -3,10 +3,10 @@
 STREAM UG is a movie/media streaming web app with two sides: an **Admin Panel**
 for managing content and a **User Panel** for browsing and watching content.
 
-This repository contains the initial MVP skeleton, built with **React + TypeScript + Vite**
-and client-side routing via **react-router-dom**. All data is currently backed by
-in-memory mock data (see `src/data/mockData.ts`) so the app is demonstrable
-immediately; it is structured so a real backend/API can be plugged in later.
+This repository contains the STREAM UG app, built with **React + TypeScript + Vite**
+and client-side routing via **react-router-dom**. The frontend is connected to
+the dedicated STREAM UG Supabase project; mock data is used only when a
+different environment deliberately overrides or disables the Supabase config.
 
 ## Getting started
 
@@ -21,12 +21,11 @@ npm run lint     # lint with oxlint
 
 The app connects to the STREAM UG Supabase project (`bwzbtwclfvdgezyqvswr`) for persistent storage and authentication, or can run in mock mode when the environment variables are absent. It uses the public publishable key in the browser; never use a service-role/secret key in frontend code.
 
-The app can run entirely on mock data, or connect to a real
-[Supabase](https://supabase.com) project for persistent storage and auth:
+The app already has the STREAM UG project URL and public publishable key configured in `src/lib/supabaseClient.ts`. You can override them with environment variables for another deployment. Never place a service-role or secret key in frontend code.
 
 1. Copy `.env.example` to `.env`.
 2. In your Supabase project dashboard, go to **Project Settings → API** and
-   copy the **Project URL** and ****publishable** key into
+   copy the **Project URL** and **publishable** key into
    `.env` as `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`.
    `VITE_SUPABASE_URL` must be the **base project URL**
    (e.g. `https://xxxxxxxx.supabase.co`) — do **not** append `/rest/v1/` or
