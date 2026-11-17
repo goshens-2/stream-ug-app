@@ -205,7 +205,7 @@ export default function Browse() {
           </div>
         </div>
 
-        <div className="mt-10">
+        <div className="mt-10 flex justify-center text-center">
           <button
             type="button"
             aria-expanded={categoriesOpen}
