@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, Link } from 'react-router-dom';
 import { useAppState } from '../context/AppStateContext';
 import './AdminLayout.css';
 
@@ -35,9 +35,6 @@ export function AdminLayout() {
           ))}
         </nav>
         <div className="admin-sidebar__bottom">
-          <NavLink to="/browse" className="admin-back-link">
-            <span className="admin-nav__icon">↗</span> View streaming site
-          </NavLink>
           <div className="admin-profile">
             <div className="admin-profile__avatar">{(currentUser?.name || 'A').charAt(0).toUpperCase()}</div>
             <div className="admin-profile__details">
@@ -51,7 +48,7 @@ export function AdminLayout() {
       <div className="admin-workspace">
         <header className="admin-topbar">
           <div><span className="admin-topbar__eyebrow">STREAM UG / ADMIN</span><strong>Management Dashboard</strong></div>
-          <span className="admin-status"><i /> System workspace</span>
+          <Link to="/browse" className="admin-topbar-link"><span aria-hidden="true">↗</span> View streaming site</Link>
         </header>
         <main className="admin-main"><Outlet /></main>
       </div>
