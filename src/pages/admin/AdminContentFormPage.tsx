@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppState } from '../../context/AppStateContext';
-import type { WatermarkSettings } from '../../types';
+import type { AuthResult, WatermarkSettings } from '../../types';
 import './AdminContentFormPage.css';
 
 const emptyWatermark: WatermarkSettings = {
@@ -45,7 +45,7 @@ export function AdminContentFormPage() {
     setSaveError('');
     const now = new Date().toISOString();
     const watermarkSettings = watermark;
-    let result;
+    let result: AuthResult;
 
     if (isEditing && existing) {
       result = await updateContent({
