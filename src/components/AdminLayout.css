@@ -16,17 +16,20 @@
   border-right: 1px solid #24252d;
 }
 .admin-brand { display:flex; align-items:center; gap:11px; padding:0 8px 34px; font-size:15px; font-weight:900; letter-spacing:1.1px; }
-.admin-brand b { color:#f04452; }
+.admin-brand b { color:#d8dbe3; }
 .admin-brand small { display:block; margin-top:4px; color:#777985; font-size:9px; letter-spacing:2px; font-weight:700; }
-.admin-brand__mark { display:grid; place-items:center; width:38px; height:38px; border-radius:11px; background:#e73545; color:white; font-size:23px; font-weight:900; box-shadow:0 7px 22px #e7354533; }
+.admin-brand__mark { display:grid; place-items:center; width:38px; height:38px; border-radius:11px; background:#292d38; color:white; font-size:23px; font-weight:900; box-shadow:0 7px 22px #0005; }
 .admin-sidebar__label { padding:0 12px 11px; color:#686b77; font-size:10px; font-weight:800; letter-spacing:1.7px; }
 .admin-nav { display:flex; flex-direction:column; gap:5px; }
 .admin-nav a, .admin-back-link { min-height:44px; display:flex; align-items:center; gap:12px; padding:0 12px; border-radius:9px; color:#a6a8b2; text-decoration:none; font-size:13px; font-weight:600; transition:background .18s,color .18s; }
 .admin-nav a:hover, .admin-back-link:hover { background:#1b1d25; color:#fff; }
-.admin-nav a.active { background:linear-gradient(90deg,#e7354526,#e735450d); color:#fff; box-shadow:inset 3px 0 #ed3e4c; }
+.admin-nav a.active { background:#20232c; color:#fff; box-shadow:inset 3px 0 #8b93a3; }
 .admin-nav a:nth-child(3) { color:#ff7b84; }
+.admin-nav a:nth-child(3).active { background:linear-gradient(90deg,#e7354526,#e735450d); box-shadow:inset 3px 0 #ed3e4c; }
 .admin-nav__icon { width:19px; text-align:center; color:#858895; font-size:17px; }
-.admin-nav a.active .admin-nav__icon { color:#ff6873; }
+.admin-nav a.active .admin-nav__icon { color:#c2c7d1; }
+.admin-nav a:nth-child(3) .admin-nav__icon,
+.admin-nav a:nth-child(3).active .admin-nav__icon { color:#ff7b84; }
 .admin-nav__plus { margin-left:auto; font-size:19px; }
 .admin-sidebar__bottom { margin-top:auto; }
 .admin-back-link { margin-bottom:15px; font-size:12px; }
