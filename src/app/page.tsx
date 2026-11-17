@@ -123,7 +123,7 @@ export default function Home() {
       </section>
 
       <footer className="relative border-t border-white/10 px-5 py-4 text-center text-[11px] text-white/35 sm:py-5">
-        STREAM UG — Engineered with VISION.
+        STREAM UG — Engineered by <span className="text-blue-500">V</span>ision.
       </footer>
     </main>
   );
