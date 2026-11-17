@@ -15,41 +15,41 @@
   background: #101116;
   border-right: 1px solid #24252d;
 }
-.admin-brand { display:flex; align-items:center; gap:11px; padding:0 8px 34px; font-size:15px; font-weight:900; letter-spacing:1.1px; }
+.admin-brand { display:flex; align-items:center; gap:11px; padding:0 8px 34px; font-size:17px; font-weight:900; letter-spacing:1.1px; }
 .admin-brand b { color:#d8dbe3; }
-.admin-brand small { display:block; margin-top:4px; color:#777985; font-size:9px; letter-spacing:2px; font-weight:700; }
+.admin-brand small { display:block; margin-top:4px; color:#9295a0; font-size:11px; letter-spacing:2px; font-weight:700; }
 .admin-brand__mark { display:grid; place-items:center; width:38px; height:38px; border-radius:11px; background:#292d38; color:white; font-size:23px; font-weight:900; box-shadow:0 7px 22px #0005; }
-.admin-sidebar__label { padding:0 12px 11px; color:#686b77; font-size:10px; font-weight:800; letter-spacing:1.7px; }
+.admin-sidebar__label { padding:0 12px 11px; color:#858895; font-size:11px; font-weight:800; letter-spacing:1.7px; }
 .admin-nav { display:flex; flex-direction:column; gap:5px; }
-.admin-nav a, .admin-back-link { min-height:44px; display:flex; align-items:center; gap:12px; padding:0 12px; border-radius:9px; color:#a6a8b2; text-decoration:none; font-size:13px; font-weight:600; transition:background .18s,color .18s; }
-.admin-nav a:hover, .admin-back-link:hover { background:#1b1d25; color:#fff; }
+.admin-nav a { min-height:47px; display:flex; align-items:center; gap:12px; padding:0 12px; border-radius:9px; color:#b8bac3; text-decoration:none; font-size:15px; font-weight:600; transition:background .18s,color .18s; }
+.admin-nav a:hover { background:#1b1d25; color:#fff; }
 .admin-nav a.active { background:#20232c; color:#fff; box-shadow:inset 3px 0 #8b93a3; }
 .admin-nav a:nth-child(3) { color:#ff7b84; }
 .admin-nav a:nth-child(3).active { background:linear-gradient(90deg,#e7354526,#e735450d); box-shadow:inset 3px 0 #ed3e4c; }
-.admin-nav__icon { width:19px; text-align:center; color:#858895; font-size:17px; }
+.admin-nav__icon { width:21px; text-align:center; color:#969aa6; font-size:19px; }
 .admin-nav a.active .admin-nav__icon { color:#c2c7d1; }
 .admin-nav a:nth-child(3) .admin-nav__icon,
 .admin-nav a:nth-child(3).active .admin-nav__icon { color:#ff7b84; }
-.admin-nav__plus { margin-left:auto; font-size:19px; }
+.admin-nav__plus { margin-left:auto; font-size:21px; }
 .admin-sidebar__bottom { margin-top:auto; }
-.admin-back-link { margin-bottom:15px; font-size:12px; }
 .admin-profile { display:flex; align-items:center; gap:10px; padding:14px 6px 0; border-top:1px solid #292a32; }
-.admin-profile__avatar { display:grid; place-items:center; width:34px; height:34px; border-radius:50%; background:#292b36; color:#fff; font-weight:800; }
+.admin-profile__avatar { display:grid; place-items:center; width:36px; height:36px; border-radius:50%; background:#292b36; color:#fff; font-weight:800; font-size:15px; }
 .admin-profile__details { min-width:0; flex:1; }
 .admin-profile__details strong, .admin-profile__details small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.admin-profile__details strong { font-size:12px; }
-.admin-profile__details small { margin-top:3px; color:#777985; font-size:10px; }
-.admin-profile button { border:0; background:transparent; color:#9a9ca7; font-size:20px; cursor:pointer; }
+.admin-profile__details strong { font-size:14px; }
+.admin-profile__details small { margin-top:3px; color:#9295a0; font-size:12px; }
+.admin-profile button { border:0; background:transparent; color:#b0b3bd; font-size:22px; cursor:pointer; }
 .admin-workspace { min-width:0; flex:1; }
-.admin-topbar { min-height:76px; display:flex; align-items:center; justify-content:space-between; gap:15px; padding:0 38px; background:#101116; border-bottom:1px solid #24252d; }
-.admin-topbar__eyebrow { display:block; margin-bottom:4px; color:#777985; font-size:9px; font-weight:800; letter-spacing:1.6px; }
-.admin-topbar strong { font-size:15px; font-weight:700; }
-.admin-status { display:flex; align-items:center; gap:8px; color:#a3a5ae; font-size:11px; }
-.admin-status i { width:7px; height:7px; border-radius:50%; background:#35c98a; box-shadow:0 0 10px #35c98a88; }
+.admin-topbar { min-height:82px; display:flex; align-items:center; justify-content:space-between; gap:15px; padding:0 38px; background:#101116; border-bottom:1px solid #24252d; }
+.admin-topbar__eyebrow { display:block; margin-bottom:5px; color:#9295a0; font-size:11px; font-weight:800; letter-spacing:1.6px; }
+.admin-topbar strong { font-size:18px; font-weight:700; }
+.admin-topbar-link { display:inline-flex; align-items:center; gap:9px; padding:10px 14px; border:1px solid #343741; border-radius:8px; color:#d0d2d9; text-decoration:none; font-size:14px; font-weight:650; transition:background .18s,border-color .18s,color .18s; }
+.admin-topbar-link:hover { background:#20232c; border-color:#555b69; color:#fff; }
+.admin-topbar-link span { font-size:18px; }
 .admin-main { width:100%; max-width:1500px; margin:0 auto; padding:35px 38px 60px; }
-.admin-main h1 { margin:0; color:#fff; font-size:27px; letter-spacing:-.7px; }
+.admin-main h1 { margin:0; color:#fff; font-size:29px; letter-spacing:-.7px; }
 @media (max-width: 820px) {
-  .admin-sidebar { width:210px; flex-basis:210px; padding-left:12px; padding-right:12px; }
+  .admin-sidebar { width:220px; flex-basis:220px; padding-left:12px; padding-right:12px; }
   .admin-topbar { padding:0 22px; }
   .admin-main { padding:27px 22px 45px; }
 }
@@ -59,10 +59,11 @@
   .admin-brand { padding:0 5px 15px; }
   .admin-sidebar__label, .admin-sidebar__bottom { display:none; }
   .admin-nav { flex-direction:row; overflow-x:auto; padding-bottom:3px; }
-  .admin-nav a { flex:0 0 auto; min-height:38px; padding:0 10px; font-size:11px; }
+  .admin-nav a { flex:0 0 auto; min-height:42px; padding:0 10px; font-size:13px; }
   .admin-nav__icon { display:none; }
-  .admin-topbar { min-height:62px; padding:0 17px; }
-  .admin-status { font-size:0; }
+  .admin-topbar { min-height:68px; padding:0 17px; }
+  .admin-topbar strong { font-size:15px; }
+  .admin-topbar-link { padding:8px 10px; font-size:12px; white-space:nowrap; }
   .admin-main { padding:24px 16px 40px; }
-  .admin-main h1 { font-size:23px; }
+  .admin-main h1 { font-size:25px; }
 }
