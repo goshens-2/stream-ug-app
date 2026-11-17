@@ -36,14 +36,19 @@ export function AdminContentFormPage() {
   const [ageRating, setAgeRating] = useState(existing?.ageRating ?? '');
   const [embedUrl, setEmbedUrl] = useState(existing?.embedUrl ?? '');
   const [watermark, setWatermark] = useState<WatermarkSettings>(existing?.watermark ?? emptyWatermark);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    setSaving(true);
+    setSaveError('');
     const now = new Date().toISOString();
     const watermarkSettings = watermark;
+    let result;
 
     if (isEditing && existing) {
-      updateContent({
+      result = await updateContent({
         ...existing,
         title,
         description,
@@ -64,7 +69,7 @@ export function AdminContentFormPage() {
         updatedAt: now,
       });
     } else {
-      addContent({
+      result = await addContent({
         title,
         description,
         contentTypeId,
@@ -83,6 +88,11 @@ export function AdminContentFormPage() {
         watermark: watermarkSettings,
       });
     }
+    setSaving(false);
+    if (!result.success) {
+      setSaveError(result.error || 'Unable to save this movie. Please try again.');
+      return;
+    }
     navigate('/admin/content');
   };
 
@@ -90,6 +100,7 @@ export function AdminContentFormPage() {
     <div>
       <h1>{isEditing ? 'Edit Content' : 'Upload Content'}</h1>
       <form onSubmit={handleSubmit} className="admin-content-form">
+        {saveError && <p className="admin-content-form__error" role="alert">{saveError}</p>}
         <label>
           Movie Title
           <input value={title} onChange={(e) => setTitle(e.target.value)} required />
@@ -221,7 +232,7 @@ export function AdminContentFormPage() {
           </label>
         </fieldset>
 
-        <button type="submit">{isEditing ? 'Save Changes' : 'Upload Content'}</button>
+        <button type="submit" disabled={saving}>{saving ? 'Publishing…' : isEditing ? 'Save Changes' : 'Publish Movie'}</button>
       </form>
     </div>
   );
