@@ -88,8 +88,8 @@ interface AppState {
   login: (email: string, password: string) => Promise<AuthResult>;
   signup: (username: string, email: string, password: string) => Promise<AuthResult>;
   logout: () => void;
-  addContent: (content: NewContent) => void;
-  updateContent: (content: Content) => void;
+  addContent: (content: NewContent) => Promise<AuthResult>;
+  updateContent: (content: Content) => Promise<AuthResult>;
   addContentType: (contentType: NewContentType) => void;
   addCategory: (category: NewCategory) => void;
   submitMovieRequest: (title: string, note?: string) => void;
@@ -302,20 +302,26 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     login,
     signup,
     logout,
-    addContent: (content) => {
+    addContent: async (content) => {
       const now = new Date().toISOString();
       const localContent: Content = { ...content, id: `content-${Date.now()}`, createdAt: now, updatedAt: now };
-      // Optimistically render with a local id, then reconcile with the
-      // database-generated id/timestamps once the insert resolves.
-      setContents((prev) => [localContent, ...prev]);
-      void insertContent(localContent).then((created) => {
-        if (created.id === localContent.id) return;
-        setContents((prev) => prev.map((c) => (c.id === localContent.id ? created : c)));
-      });
+      try {
+        const created = await insertContent(localContent);
+        setContents((prev) => [created, ...prev.filter((item) => item.id !== created.id)]);
+        return { success: true };
+      } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Unable to publish this movie.' };
+      }
     },
-    updateContent: (content) => {
-      setContents((prev) => prev.map((c) => (c.id === content.id ? content : c)));
-      void upsertContent(content);
+    updateContent: async (content) => {
+      const updated = { ...content, updatedAt: new Date().toISOString() };
+      try {
+        await upsertContent(updated);
+        setContents((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+        return { success: true };
+      } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Unable to save movie changes.' };
+      }
     },
     addContentType: (contentType) => {
       const localContentType: ContentType = { ...contentType, id: `ct-${Date.now()}` };
