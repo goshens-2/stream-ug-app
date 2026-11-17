@@ -2,35 +2,59 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { useAppState } from '../context/AppStateContext';
 import './AdminLayout.css';
 
-/** Sidebar layout shell for the Admin Panel. */
+const navItems = [
+  { to: '/admin', label: 'Overview', icon: '▦', end: true },
+  { to: '/admin/content', label: 'Movie Library', icon: '▣' },
+  { to: '/admin/content/new', label: 'Post a Movie', icon: '+' },
+  { to: '/admin/categories', label: 'Categories', icon: '◈' },
+  { to: '/admin/content-types', label: 'Content Types', icon: '▤' },
+  { to: '/admin/requests', label: 'Movie Requests', icon: '✉' },
+  { to: '/admin/analytics', label: 'Analytics', icon: '▥' },
+  { to: '/admin/users', label: 'Users', icon: '♙' },
+];
+
+/** Dedicated administration workspace, visually separate from the customer experience. */
 export function AdminLayout() {
   const { currentUser, logout } = useAppState();
 
   return (
-    <div className="admin-layout">
-      <aside className="admin-layout__sidebar">
-        <div className="admin-layout__brand">STREAM UG Admin</div>
-        {currentUser && <div className="admin-layout__user">{currentUser.name}</div>}
-        <nav className="admin-layout__nav">
-          <NavLink to="/admin" end>
-            Dashboard
-          </NavLink>
-          <NavLink to="/admin/content">Content</NavLink>
-          <NavLink to="/admin/content/new">Upload Content</NavLink>
-          <NavLink to="/admin/content-types">Content Types</NavLink>
-          <NavLink to="/admin/categories">Categories</NavLink>
-          <NavLink to="/admin/requests">Movie Requests</NavLink>
-          <NavLink to="/admin/analytics">Analytics</NavLink>
-          <NavLink to="/admin/users">Users</NavLink>
-          <NavLink to="/browse">Back to User Panel</NavLink>
-          <button type="button" className="admin-layout__logout" onClick={logout}>
-            Log Out
-          </button>
+    <div className="admin-shell">
+      <aside className="admin-sidebar">
+        <div className="admin-brand">
+          <span className="admin-brand__mark">S</span>
+          <span>STREAM <b>UG</b><small>CONTROL CENTRE</small></span>
+        </div>
+        <div className="admin-sidebar__label">WORKSPACE</div>
+        <nav className="admin-nav" aria-label="Admin navigation">
+          {navItems.map((item) => (
+            <NavLink key={item.to} to={item.to} end={item.end}>
+              <span className="admin-nav__icon">{item.icon}</span>
+              <span>{item.label}</span>
+              {item.label === 'Post a Movie' && <span className="admin-nav__plus">+</span>}
+            </NavLink>
+          ))}
         </nav>
+        <div className="admin-sidebar__bottom">
+          <NavLink to="/browse" className="admin-back-link">
+            <span className="admin-nav__icon">↗</span> View streaming site
+          </NavLink>
+          <div className="admin-profile">
+            <div className="admin-profile__avatar">{(currentUser?.name || 'A').charAt(0).toUpperCase()}</div>
+            <div className="admin-profile__details">
+              <strong>{currentUser?.name || 'Administrator'}</strong>
+              <small>Administrator</small>
+            </div>
+            <button type="button" onClick={logout} aria-label="Log out" title="Log out">⇥</button>
+          </div>
+        </div>
       </aside>
-      <main className="admin-layout__main">
-        <Outlet />
-      </main>
+      <div className="admin-workspace">
+        <header className="admin-topbar">
+          <div><span className="admin-topbar__eyebrow">STREAM UG / ADMIN</span><strong>Management Dashboard</strong></div>
+          <span className="admin-status"><i /> System workspace</span>
+        </header>
+        <main className="admin-main"><Outlet /></main>
+      </div>
     </div>
   );
 }
