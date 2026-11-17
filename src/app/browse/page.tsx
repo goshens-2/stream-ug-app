@@ -94,6 +94,9 @@ export default function Browse() {
   const [cat, setCat] = useState("all");
   const [loading, setLoading] = useState(true);
   const [unread, setUnread] = useState(0);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [showAllCategories, setShowAllCategories] = useState(false);
+  const [categoriesOpenAt, setCategoriesOpenAt] = useState(0);
 
   useEffect(() => {
     const s = createClient();
@@ -128,6 +131,7 @@ export default function Browse() {
     () => [...cats, ...demoCategories.filter((demo) => !cats.some((real) => real.name.toLowerCase() === demo.name.toLowerCase()))],
     [cats],
   );
+  const visibleCategories = showAllCategories ? allCategories : allCategories.slice(0, 6);
   const allMovies = useMemo(() => [...items, ...demoMovies], [items]);
   const filtered = useMemo(
     () => allMovies.filter((x) =>
@@ -136,6 +140,18 @@ export default function Browse() {
     ),
     [allMovies, cat, q],
   );
+
+  useEffect(() => {
+    if (!categoriesOpen) return;
+    const closeWhenScrolledAway = () => {
+      if (window.scrollY > categoriesOpenAt + 260) {
+        setCategoriesOpen(false);
+        setShowAllCategories(false);
+      }
+    };
+    window.addEventListener("scroll", closeWhenScrolledAway, { passive: true });
+    return () => window.removeEventListener("scroll", closeWhenScrolledAway);
+  }, [categoriesOpen, categoriesOpenAt]);
 
   useEffect(() => {
     if (q.trim().length < 3) return;
@@ -189,12 +205,71 @@ export default function Browse() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-wrap gap-3">
-          <button onClick={() => setCat("all")} className={"rounded-full px-5 py-2.5 text-xs font-semibold " + (cat === "all" ? "bg-white text-black" : "border border-white/10 text-white/60")}>All content</button>
-          {allCategories.map((x) => (
-            <button key={x.id} onClick={() => setCat(x.id)} className={"rounded-full px-5 py-2.5 text-xs font-semibold " + (cat === x.id ? "bg-white text-black" : "border border-white/10 text-white/60")}>{x.name}</button>
-          ))}
+        <div className="mt-10">
+          <button
+            type="button"
+            aria-expanded={categoriesOpen}
+            aria-controls="browse-categories"
+            onClick={() => {
+              setCategoriesOpen((open) => {
+                const next = !open;
+                if (next) setCategoriesOpenAt(window.scrollY);
+                else setShowAllCategories(false);
+                return next;
+              });
+            }}
+            className="group inline-flex items-center gap-3 rounded-full border border-white/15 bg-white px-6 py-3 text-xs font-extrabold uppercase tracking-[.16em] text-black transition hover:-translate-y-0.5 hover:bg-[#f16b78]"
+          >
+            Browse
+            <span className={"text-base transition-transform duration-300 " + (categoriesOpen ? "rotate-180" : "")}>⌄</span>
+          </button>
+          {categoriesOpen && (
+            <div id="browse-categories" className="mt-5 rounded-2xl border border-white/10 bg-white/[.035] p-4 sm:p-5">
+              <div className="flex flex-wrap gap-3">
+                {visibleCategories.map((x, index) => (
+                  <button
+                    key={x.id}
+                    onClick={() => {
+                      setCat(x.id);
+                      setCategoriesOpen(false);
+                      setShowAllCategories(false);
+                    }}
+                    style={{ animationDelay: `${index * 65}ms` }}
+                    className={"category-chip-enter rounded-full px-5 py-3 text-xs font-semibold transition duration-200 hover:-translate-y-1 hover:border-white/40 " + (cat === x.id ? "bg-white text-black" : "border border-white/15 bg-white/5 text-white/75")}
+                  >
+                    {x.name}
+                  </button>
+                ))}
+                {cat !== "all" && (
+                  <button
+                    onClick={() => { setCat("all"); setCategoriesOpen(false); setShowAllCategories(false); }}
+                    className="rounded-full border border-white/15 px-5 py-3 text-xs font-semibold text-white/65 transition hover:bg-white/10"
+                  >
+                    All content
+                  </button>
+                )}
+              </div>
+              {allCategories.length > 6 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllCategories((value) => !value)}
+                  className="mt-5 text-xs font-bold text-[#f16b78] transition hover:text-white"
+                >
+                  {showAllCategories ? "See less ↑" : "See more ↓"}
+                </button>
+              )}
+            </div>
+          )}
         </div>
+        <style jsx>{`
+          @keyframes categoryChipEnter {
+            from { opacity: 0; transform: translateY(14px) scale(.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+          }
+          .category-chip-enter {
+            animation: categoryChipEnter .42s cubic-bezier(.2,.8,.2,1) both;
+          }
+        `}</style>
 
         <div className="mt-8 flex items-center justify-between">
           <h2 className="text-xl font-bold">Explore the library</h2>
