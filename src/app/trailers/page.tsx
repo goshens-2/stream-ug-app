@@ -46,7 +46,7 @@ export default function TrailersPage() {
   const nextTrailer = () => {
     if (trailers.length) {
       setActiveIndex((current) => (current + 1) % trailers.length);
-      setMuted(true);
+      setMuted((value) => value);
     }
   };
 
@@ -80,7 +80,7 @@ export default function TrailersPage() {
             <p className="mt-2 max-w-2xl text-xs text-white/75 sm:text-sm">{activeTrailer.description}</p>
             <p className="mt-2 text-[10px] text-white/45">{activeTrailer.attribution || "STREAM UG"} · Next preview in about 30 seconds</p>
           </div>
-          <button type="button" onClick={() => { setMuted((value) => { const next = !value; if (!next && videoRef.current) { videoRef.current.muted = false; void videoRef.current.play().catch(() => setNeedsTap(true)); } else if (videoRef.current) { videoRef.current.muted = true; } return next; }) }} className="absolute right-4 top-4 z-10 rounded-full border border-white/25 bg-black/65 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur">{muted ? "Turn sound on" : "Mute"}</button>
+          <button type="button" aria-label={muted ? "Turn preview sound on" : "Mute preview"} title={muted ? "Turn sound on" : "Mute sound"} onClick={() => { setMuted((value) => { const next = !value; if (videoRef.current) { videoRef.current.muted = next; if (!next) void videoRef.current.play().catch(() => setNeedsTap(true)); } return next; }); }} className="absolute right-4 top-4 z-10 grid h-11 w-11 place-items-center rounded-full border border-white/25 bg-black/65 text-white shadow-lg backdrop-blur transition hover:bg-black/85"><svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{muted ? <><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="m16 9 5 6m0-6-5 6"/></> : <><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7m2.5-9.5a8.5 8.5 0 0 1 0 12"/></>}</svg></button>
           <button type="button" onClick={nextTrailer} className="absolute bottom-5 right-5 z-10 rounded-full bg-[#e73545] px-4 py-2 text-xs font-bold text-white shadow-lg transition hover:bg-[#f04455]">Next trailer →</button>
         </section>
         <div className="mt-8 flex items-center justify-between gap-3"><h2 className="text-lg font-bold">Up next</h2><p className="text-xs text-white/40">Choose a title to play it now</p></div>
