@@ -21,6 +21,12 @@ const demoMovies: Movie[] = [
   { id: "demo-movie-6", title: "Code Red", description: "A suspense-filled thriller where every decision changes the outcome.", poster_url: "https://picsum.photos/seed/stream-code-red/480/720", release_year: 2022, duration_minutes: 109, category_id: "demo-action", is_demo: true },
 ];
 
+const sampleTrailerMovies: Movie[] = [
+  { id: "open-bbb", title: "Big Buck Bunny", description: "A gentle giant rabbit faces three mischievous forest troublemakers.", poster_url: "https://picsum.photos/seed/stream-buck-bunny/1280/720", trailer_url: "https://video.blender.org/static/webseed/bf1f3fb5-b119-4f9f-9930-8e20e892b898-720.mp4", release_year: 2008, duration_minutes: 10, category_id: "sample-animation", is_demo: true },
+  { id: "open-sintel", title: "Sintel", description: "A lone wanderer crosses a frozen world in search of a dragon she once befriended.", poster_url: "https://picsum.photos/seed/stream-sintel/1280/720", trailer_url: "https://video.blender.org/static/webseed/0eb052d0-fd51-43e6-aa33-ecdbf77a5d40-720.mp4", release_year: 2010, duration_minutes: 15, category_id: "sample-fantasy", is_demo: true },
+  { id: "open-tears-steel", title: "Tears of Steel", description: "A science-fiction battle unfolds across a futuristic Amsterdam.", poster_url: "https://picsum.photos/seed/stream-tears-steel/1280/720", trailer_url: "https://video.blender.org/static/webseed/8533ea43-4271-4a57-9694-e9d0b35e1aa1-720.mp4", release_year: 2012, duration_minutes: 12, category_id: "sample-scifi", is_demo: true },
+  { id: "open-caminandes", title: "Caminandes: Gran Dillama", description: "A determined llama discovers that greener pastures come with a few surprises.", poster_url: "https://picsum.photos/seed/stream-caminandes/1280/720", trailer_url: "https://video.blender.org/static/webseed/fb70d459-48d2-4db5-adba-813c84f9200a-720.mp4", release_year: 2013, duration_minutes: 2, category_id: "sample-adventure", is_demo: true },
+];
 function SearchGlyph() {
   return <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.2 4.2"/></svg>;
 }
@@ -44,7 +50,9 @@ export default function Browse() {
   const [categoriesOpenAt, setCategoriesOpenAt] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [activeTrailerGroup, setActiveTrailerGroup] = useState(0);
+  const [activeTrailerIndex, setActiveTrailerIndex] = useState(0);
+  const [suggestionIndex, setSuggestionIndex] = useState(0);
+  const [trailerMuted, setTrailerMuted] = useState(true);
 
   useEffect(() => {
     const s = createClient();
@@ -80,25 +88,22 @@ export default function Browse() {
     const term = q.trim().toLowerCase();
     return allMovies.filter((movie) => !term || movie.title.toLowerCase().includes(term) || (movie.description || "").toLowerCase().includes(term)).slice(0, 7);
   }, [allMovies, q]);
-  const trailerGroups = useMemo(() => {
-    const uploaded = items.filter((movie) => !!movie.trailer_url);
-    const groups = cats.map((category) => ({
-      id: category.id, name: category.name,
-      movies: uploaded.filter((movie) => movie.category_id === category.id).slice(0, 4),
-    })).filter((group) => group.movies.length > 0);
-    if (groups.length) return groups;
-    return demoCategories.map((category) => ({
-      id: category.id,
-      name: category.name.replace(" (Sample)", ""),
-      movies: demoMovies.filter((movie) => movie.category_id === category.id).slice(0, 4),
-    })).filter((group) => group.movies.length > 0);
-  }, [items, cats]);
-  const activeGroup = trailerGroups[activeTrailerGroup % Math.max(1, trailerGroups.length)];
+  const trailerMovies = useMemo(() => [
+    ...items.filter((movie) => !!movie.trailer_url).map((movie) => ({ ...movie, category_name: cats.find((category) => category.id === movie.category_id)?.name || "STREAM UG", attribution: "STREAM UG" })),
+    ...sampleTrailerMovies.map((movie) => ({ ...movie, category_name: movie.category_id === "sample-animation" ? "Animation" : movie.category_id === "sample-fantasy" ? "Fantasy" : movie.category_id === "sample-scifi" ? "Sci-Fi" : "Adventure", attribution: "Blender Foundation · CC BY 3.0" })),
+  ], [items, cats]);
+  const activeTrailer = trailerMovies[activeTrailerIndex % Math.max(1, trailerMovies.length)];
+  const rotatingSuggestions = useMemo(() => allMovies.slice(0, 8), [allMovies]);
   useEffect(() => {
-    if (trailerGroups.length < 2) return;
-    const timer = window.setInterval(() => setActiveTrailerGroup((value) => (value + 1) % trailerGroups.length), 12000);
+    if (trailerMovies.length < 2) return;
+    const timer = window.setInterval(() => { setActiveTrailerIndex((value) => (value + 1) % trailerMovies.length); setTrailerMuted(true); }, 10000);
     return () => window.clearInterval(timer);
-  }, [trailerGroups.length]);
+  }, [trailerMovies.length]);
+  useEffect(() => {
+    if (rotatingSuggestions.length < 2) return;
+    const timer = window.setInterval(() => setSuggestionIndex((value) => (value + 1) % rotatingSuggestions.length), 4200);
+    return () => window.clearInterval(timer);
+  }, [rotatingSuggestions.length]);
 
   useEffect(() => {
     if (!categoriesOpen) return;
@@ -139,6 +144,10 @@ export default function Browse() {
             <Link href="/history" className="transition hover:text-white">Continue watching</Link>
           </nav>
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
+            {rotatingSuggestions.length > 0 && <button type="button" onClick={() => { const title = rotatingSuggestions[suggestionIndex % rotatingSuggestions.length].title; setQ(title); setSearchOpen(true); setProfileOpen(false); }} className="hidden max-w-[190px] items-center gap-2 overflow-hidden rounded-full border border-white/10 bg-white/[.045] px-3 py-2 text-left transition hover:border-[#f04455]/60 md:flex">
+              <span className="shrink-0 text-[9px] font-black uppercase tracking-[.16em] text-[#ff8791]">Try</span>
+              <span key={rotatingSuggestions[suggestionIndex % rotatingSuggestions.length].id} className="truncate text-xs font-semibold text-white/85">{rotatingSuggestions[suggestionIndex % rotatingSuggestions.length].title}</span>
+            </button>
             <div className="relative">
               {searchOpen && (
                 <div className="absolute right-0 top-[calc(100%+14px)] z-50 w-[min(92vw,390px)] overflow-hidden rounded-2xl border border-white/15 bg-[#151821] p-4 shadow-[0_24px_70px_rgba(0,0,0,.6)]">
@@ -181,24 +190,24 @@ export default function Browse() {
         </div>
       </header>
 
-      <section className="mx-auto max-w-7xl px-5 pt-7">
-        <div className="relative min-h-[360px] overflow-hidden rounded-[2rem] border border-white/10 bg-[#11151e] shadow-[0_28px_90px_rgba(0,0,0,.4)] sm:min-h-[430px]">
-          {activeGroup && <div key={activeGroup.id + "-" + activeTrailerGroup} className="absolute inset-0 grid grid-cols-2 gap-2 p-3 sm:grid-cols-4 sm:gap-3 sm:p-5 trailer-group-fade">
-            {activeGroup.movies.map((movie, index) => <div key={movie.id} className={"relative min-w-0 overflow-hidden rounded-2xl bg-[#20232c] " + (index === 0 ? "col-span-2 sm:col-span-2 sm:row-span-2" : "")}>
-              {movie.trailer_url && !movie.is_demo ? <video src={movie.trailer_url} poster={movie.poster_url || undefined} autoPlay muted playsInline loop className="h-full min-h-[150px] w-full object-cover"/> : movie.poster_url ? <img src={movie.poster_url} alt={movie.title} className="h-full min-h-[150px] w-full object-cover"/> : <div className="flex h-full min-h-[150px] items-end bg-gradient-to-br from-slate-700 to-slate-950 p-4"><span className="text-xl font-black">{movie.title}</span></div>}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent"/>
-              <div className="absolute bottom-0 left-0 p-4 sm:p-6"><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#ff9ba4]">{movie.is_demo ? "Preview sample" : "Now showing"}</p><h2 className="mt-1 text-lg font-black text-white sm:text-2xl">{movie.title}</h2><p className="mt-1 line-clamp-2 max-w-md text-xs text-white/70">{movie.description}</p></div>
-            </div>)}
-          </div>}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/20"/>
-          <div className="absolute right-4 top-4 z-10 rounded-full border border-white/30 bg-black/65 px-4 py-2 text-[10px] font-black uppercase tracking-[.18em] text-white shadow-xl backdrop-blur-md sm:right-6 sm:top-6">{activeGroup?.name || "Featured trailers"}</div>
-          {trailerGroups.length > 1 && <div className="absolute bottom-4 right-4 z-10 flex gap-1.5 sm:bottom-6 sm:right-6">{trailerGroups.map((group,index)=><button key={group.id} type="button" aria-label={"Show "+group.name+" trailers"} onClick={()=>setActiveTrailerGroup(index)} className={"h-1.5 rounded-full transition-all " + (index===activeTrailerGroup ? "w-8 bg-[#ff6473]" : "w-3 bg-white/45 hover:bg-white")}/>)}</div>}
+      <section className="mx-auto max-w-7xl px-5 pt-6">
+        <div className="relative h-[clamp(260px,42vw,420px)] overflow-hidden rounded-[1.6rem] border border-white/10 bg-[#11151e] shadow-[0_22px_70px_rgba(0,0,0,.42)]">
+          {activeTrailer?.trailer_url && <video key={activeTrailer.id} src={activeTrailer.trailer_url} poster={activeTrailer.poster_url || undefined} autoPlay muted={trailerMuted} playsInline preload="auto" onTimeUpdate={(event) => { if (event.currentTarget.currentTime >= 24) event.currentTarget.currentTime = 0; }} className="absolute inset-0 h-full w-full object-cover" /> }
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/15" />
+          <div className="absolute right-4 top-4 z-10 rounded-full border border-white/25 bg-black/60 px-4 py-2 text-[10px] font-black uppercase tracking-[.18em] text-white backdrop-blur-md sm:right-6 sm:top-6">{activeTrailer?.category_name || "Featured preview"}</div>
+          <button type="button" onClick={() => setTrailerMuted((value) => !value)} className="absolute left-4 top-4 z-10 rounded-full border border-white/25 bg-black/55 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md sm:left-6 sm:top-6">{trailerMuted ? "Turn sound on" : "Mute preview"}</button>
+          <div className="absolute inset-0 z-[1] flex items-center justify-center px-6 text-center">
+            <div className="max-w-2xl">
+              <p className="text-[10px] font-black uppercase tracking-[.28em] text-[#ff9ba4]">STREAM UG · Featured preview</p>
+              <h1 className="mt-3 text-3xl font-black tracking-tight text-white drop-shadow-lg sm:text-5xl">{activeTrailer?.title || "Discover your next movie"}</h1>
+              <p className="mx-auto mt-3 max-w-xl text-xs leading-6 text-white/80 sm:text-sm">{activeTrailer?.description}</p>
+              <p className="mt-3 text-[9px] font-semibold uppercase tracking-[.16em] text-white/55">{activeTrailer?.attribution || "STREAM UG"} · Preview plays automatically</p>
+            </div>
+          </div>
+          <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2">
+            {trailerMovies.map((movie, index) => <button key={movie.id} type="button" aria-label={"Show " + movie.title + " preview"} onClick={() => { setActiveTrailerIndex(index); setTrailerMuted(true); }} className={"h-1.5 rounded-full transition-all " + (index === activeTrailerIndex % trailerMovies.length ? "w-8 bg-[#ff6473]" : "w-3 bg-white/45 hover:bg-white")} />)}
+          </div>
         </div>
-        <style jsx>{`
-          @keyframes trailerGroupFade { 0% { opacity: 0; transform: scale(1.012); } 12%,82% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(.995); } }
-          .trailer-group-fade { animation: trailerGroupFade 12s ease-in-out both; }
-          @media (prefers-reduced-motion: reduce) { .trailer-group-fade { animation: none; } }
-        `}</style>
         <div className="mt-10 flex flex-col items-center text-center">
           <button type="button" aria-expanded={categoriesOpen} aria-controls="browse-categories" onClick={() => {
             setCategoriesOpen((open) => { const next = !open; if (next) setCategoriesOpenAt(window.scrollY); else setShowAllCategories(false); return next; });
