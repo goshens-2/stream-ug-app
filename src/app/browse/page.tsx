@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-type Movie = { id: string; title: string; description: string | null; poster_url: string | null; release_year: number | null; duration_minutes: number | null; category_id: string | null; is_demo?: boolean };
+type Movie = { id: string; title: string; description: string | null; poster_url: string | null; trailer_url?: string | null; release_year: number | null; duration_minutes: number | null; category_id: string | null; is_demo?: boolean };
 type Category = { id: string; name: string; slug: string };
 const demoCategories: Category[] = [
   { id: "demo-action", name: "Action (Sample)", slug: "demo-action" },
@@ -44,6 +44,7 @@ export default function Browse() {
   const [categoriesOpenAt, setCategoriesOpenAt] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [activeTrailerGroup, setActiveTrailerGroup] = useState(0);
 
   useEffect(() => {
     const s = createClient();
@@ -53,7 +54,7 @@ export default function Browse() {
       if (!user) { window.location.replace("/login"); return; }
       const [{ data: p }, { data: c }, { data: k }, { count }] = await Promise.all([
         s.from("profiles").select("name,is_admin").eq("id", user.id).maybeSingle(),
-        s.from("content").select("id,title,description,poster_url,release_year,duration_minutes,category_id").order("created_at", { ascending: false }),
+        s.from("content").select("id,title,description,poster_url,trailer_url,release_year,duration_minutes,category_id").order("created_at", { ascending: false }),
         s.from("categories").select("id,name,slug").order("name"),
         s.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("read", false),
       ]);
@@ -77,9 +78,23 @@ export default function Browse() {
   ), [allMovies, cat, q]);
   const suggestions = useMemo(() => {
     const term = q.trim().toLowerCase();
-    return allMovies.filter((movie) => !term || movie.title.toLowerCase().includes(term))
-      .slice(0, 5);
+    return allMovies.filter((movie) => !term || movie.title.toLowerCase().includes(term) || (movie.description || "").toLowerCase().includes(term)).slice(0, 7);
   }, [allMovies, q]);
+  const trailerGroups = useMemo(() => {
+    const uploaded = items.filter((movie) => !!movie.trailer_url);
+    const groups = cats.map((category) => ({
+      id: category.id, name: category.name,
+      movies: uploaded.filter((movie) => movie.category_id === category.id).slice(0, 4),
+    })).filter((group) => group.movies.length > 0);
+    if (groups.length) return groups;
+    return [{ id: "demo-featured", name: "Featured previews", movies: demoMovies.slice(0, 4) }];
+  }, [items, cats]);
+  const activeGroup = trailerGroups[activeTrailerGroup % Math.max(1, trailerGroups.length)];
+  useEffect(() => {
+    if (trailerGroups.length < 2) return;
+    const timer = window.setInterval(() => setActiveTrailerGroup((value) => (value + 1) % trailerGroups.length), 12000);
+    return () => window.clearInterval(timer);
+  }, [trailerGroups.length]);
 
   useEffect(() => {
     if (!categoriesOpen) return;
@@ -113,8 +128,8 @@ export default function Browse() {
       <header className="sticky top-0 z-30 border-b border-white/10 bg-[#08090c]/95 shadow-[0_8px_35px_rgba(0,0,0,.28)] backdrop-blur-2xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4">
           <Link href="/" className="shrink-0 text-lg font-black tracking-[.18em] text-white sm:text-xl">STREAM<span className="text-[#f04455]"> UG</span></Link>
-          <nav className="hidden items-center gap-6 text-sm font-semibold text-white/80 lg:flex">
-            <Link href="/browse" className="text-white transition hover:text-white">Home</Link>
+          <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 text-sm font-semibold text-white/90 lg:flex">
+            <Link href="/browse" className="transition hover:text-white">Home</Link>
             <Link href="/trailers" className="transition hover:text-white">Trailers</Link>
             <Link href="/favorites" className="transition hover:text-white">Watchlist</Link>
             <Link href="/history" className="transition hover:text-white">Continue watching</Link>
@@ -122,18 +137,20 @@ export default function Browse() {
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
             <div className="relative">
               {searchOpen && (
-                <div className="absolute bottom-[calc(100%+14px)] right-0 w-[min(88vw,350px)] overflow-hidden rounded-2xl border border-white/15 bg-[#151821] p-3 shadow-2xl">
-                  <p className="px-2 pb-2 text-[10px] font-bold uppercase tracking-[.2em] text-white/45">{q.trim() ? "Matching titles" : "Popular searches"}</p>
-                  {suggestions.length ? suggestions.map((movie) => (
-                    <button key={movie.id} onClick={() => { setQ(movie.title); setSearchOpen(false); }} className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-white/10">
-                      <span className="h-10 w-8 shrink-0 overflow-hidden rounded-md bg-white/10">{movie.poster_url && <img src={movie.poster_url} alt="" className="h-full w-full object-cover" />}</span>
-                      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-white">{movie.title}</span>
-                      <span className="text-xs text-white/35">Search</span>
-                    </button>
-                  )) : <p className="px-2 py-3 text-sm text-white/45">No matching titles yet.</p>}
-                  <div className="mt-2 border-t border-white/10 pt-3">
-                    <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Escape") setSearchOpen(false); }} placeholder="Search movies and series…" className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#f04455]" />
+                <div className="absolute right-0 top-[calc(100%+14px)] z-50 w-[min(92vw,390px)] overflow-hidden rounded-2xl border border-white/15 bg-[#151821] p-4 shadow-[0_24px_70px_rgba(0,0,0,.6)]">
+                  <div className="flex items-center gap-3 rounded-xl border border-white/15 bg-black/35 px-3 py-2.5 focus-within:border-[#f04455]">
+                    <SearchGlyph />
+                    <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Escape") setSearchOpen(false); if (e.key === "Enter") { setSearchOpen(false); document.getElementById("library-results")?.scrollIntoView({ behavior: "smooth", block: "start" }); } }} placeholder="Search movies, shows…" className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/40" />
+                    {q && <button type="button" onClick={() => setQ("")} className="text-xs text-white/55 hover:text-white">Clear</button>}
                   </div>
+                  <p className="px-1 pb-2 pt-4 text-[10px] font-bold uppercase tracking-[.2em] text-white/45">{q.trim() ? "Search suggestions" : "Popular titles"}</p>
+                  {suggestions.length ? suggestions.map((movie) => (
+                    <button key={movie.id} type="button" onClick={() => { setQ(movie.title); setSearchOpen(false); window.setTimeout(() => document.getElementById("library-results")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80); }} className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-white/10">
+                      <span className="h-11 w-8 shrink-0 overflow-hidden rounded-md bg-white/10">{movie.poster_url && <img src={movie.poster_url} alt="" className="h-full w-full object-cover" />}</span>
+                      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-white">{movie.title}</span>
+                      <span className="text-xs text-white/35">View</span>
+                    </button>
+                  )) : <p className="px-2 py-3 text-sm text-white/45">No matching titles. Try another search.</p>}
                 </div>
               )}
               <button type="button" aria-label="Search movies" aria-expanded={searchOpen} onClick={() => { setSearchOpen((v) => !v); setProfileOpen(false); }} className="search-pulse grid h-11 w-11 place-items-center rounded-full border border-white/15 bg-white/[.06] text-white transition hover:border-[#f04455]/70 hover:bg-[#f04455]/15"><SearchGlyph /></button>
@@ -160,17 +177,24 @@ export default function Browse() {
         </div>
       </header>
 
-      <section className="mx-auto max-w-7xl px-5 py-12">
-        <div className="rounded-[2rem] border border-white/10 bg-[radial-gradient(ellipse_at_80%_0%,rgba(231,53,69,.28),transparent_45%),linear-gradient(120deg,#1b1e29,#0e1016)] p-8 shadow-[0_25px_80px_rgba(0,0,0,.25)] sm:p-12">
-          <p className="text-xs font-bold tracking-[.25em] text-[#ff8791]">YOUR STREAM STARTS HERE</p>
-          <h1 className="mt-4 max-w-2xl text-4xl font-black leading-[1.05] text-white sm:text-6xl">Find something <span className="text-white/65">worth watching.</span></h1>
-          <p className="mt-4 max-w-xl text-sm leading-7 text-white/70">Explore movies, series and entertainment in the STREAM UG library.</p>
-          <div className="mt-7 flex flex-wrap gap-3">
-            <Link href="/history" className="rounded-full bg-white px-5 py-3 text-xs font-extrabold text-black shadow-lg shadow-black/20 transition hover:-translate-y-0.5 hover:bg-[#ffb2b9]">Continue watching</Link>
-            <Link href="/trailers" className="rounded-full border border-white/30 bg-white/[.06] px-5 py-3 text-xs font-bold text-white transition hover:border-white/60 hover:bg-white/15">Watch trailers</Link>
-          </div>
+      <section className="mx-auto max-w-7xl px-5 pt-7">
+        <div className="relative min-h-[360px] overflow-hidden rounded-[2rem] border border-white/10 bg-[#11151e] shadow-[0_28px_90px_rgba(0,0,0,.4)] sm:min-h-[430px]">
+          {activeGroup && <div key={activeGroup.id + "-" + activeTrailerGroup} className="absolute inset-0 grid grid-cols-2 gap-2 p-3 sm:grid-cols-4 sm:gap-3 sm:p-5 trailer-group-fade">
+            {activeGroup.movies.map((movie, index) => <div key={movie.id} className={"relative min-w-0 overflow-hidden rounded-2xl bg-[#20232c] " + (index === 0 ? "col-span-2 row-span-2 sm:col-span-2 sm:row-span-2" : "hidden sm:block")}>
+              {movie.trailer_url && !movie.is_demo ? <video src={movie.trailer_url} poster={movie.poster_url || undefined} autoPlay muted playsInline loop className="h-full min-h-[150px] w-full object-cover"/> : movie.poster_url ? <img src={movie.poster_url} alt={movie.title} className="h-full min-h-[150px] w-full object-cover"/> : <div className="flex h-full min-h-[150px] items-end bg-gradient-to-br from-slate-700 to-slate-950 p-4"><span className="text-xl font-black">{movie.title}</span></div>}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent"/>
+              <div className="absolute bottom-0 left-0 p-4 sm:p-6"><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#ff9ba4]">{movie.is_demo ? "Preview sample" : "Now showing"}</p><h2 className="mt-1 text-lg font-black text-white sm:text-2xl">{movie.title}</h2><p className="mt-1 line-clamp-2 max-w-md text-xs text-white/70">{movie.description}</p></div>
+            </div>)}
+          </div>}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/20"/>
+          <div className="absolute right-4 top-4 z-10 rounded-full border border-white/30 bg-black/65 px-4 py-2 text-[10px] font-black uppercase tracking-[.18em] text-white shadow-xl backdrop-blur-md sm:right-6 sm:top-6">{activeGroup?.name || "Featured trailers"}</div>
+          {trailerGroups.length > 1 && <div className="absolute bottom-4 right-4 z-10 flex gap-1.5 sm:bottom-6 sm:right-6">{trailerGroups.map((group,index)=><button key={group.id} type="button" aria-label={"Show "+group.name+" trailers"} onClick={()=>setActiveTrailerGroup(index)} className={"h-1.5 rounded-full transition-all " + (index===activeTrailerGroup ? "w-8 bg-[#ff6473]" : "w-3 bg-white/45 hover:bg-white")}/>)}</div>}
         </div>
-
+        <style jsx>{`
+          @keyframes trailerGroupFade { 0% { opacity: 0; transform: scale(1.012); } 12%,82% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(.995); } }
+          .trailer-group-fade { animation: trailerGroupFade 12s ease-in-out both; }
+          @media (prefers-reduced-motion: reduce) { .trailer-group-fade { animation: none; } }
+        `}</style>
         <div className="mt-10 flex flex-col items-center text-center">
           <button type="button" aria-expanded={categoriesOpen} aria-controls="browse-categories" onClick={() => {
             setCategoriesOpen((open) => { const next = !open; if (next) setCategoriesOpenAt(window.scrollY); else setShowAllCategories(false); return next; });
@@ -195,7 +219,7 @@ export default function Browse() {
           @media (prefers-reduced-motion: reduce) { .search-pulse, .category-chip-enter { animation: none; } }
         `}</style>
 
-        <div className="mt-8 flex items-center justify-between">
+        <div id="library-results" className="mt-8 flex items-center justify-between scroll-mt-28">
           <h2 className="text-xl font-bold text-white">Explore the library</h2><span className="text-xs text-white/55">{filtered.length} titles</span>
         </div>
         <p className="mt-2 text-xs text-white/45">Sample titles are for testing only and are not saved to your account.</p>
