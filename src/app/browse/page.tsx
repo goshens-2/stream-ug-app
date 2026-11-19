@@ -147,7 +147,7 @@ export default function Browse() {
             {rotatingSuggestions.length > 0 && <button type="button" onClick={() => { const title = rotatingSuggestions[suggestionIndex % rotatingSuggestions.length].title; setQ(title); setSearchOpen(true); setProfileOpen(false); }} className="hidden max-w-[190px] items-center gap-2 overflow-hidden rounded-full border border-white/10 bg-white/[.045] px-3 py-2 text-left transition hover:border-[#f04455]/60 md:flex">
               <span className="shrink-0 text-[9px] font-black uppercase tracking-[.16em] text-[#ff8791]">Try</span>
               <span key={rotatingSuggestions[suggestionIndex % rotatingSuggestions.length].id} className="truncate text-xs font-semibold text-white/85">{rotatingSuggestions[suggestionIndex % rotatingSuggestions.length].title}</span>
-            </button>
+            </button>}
             <div className="relative">
               {searchOpen && (
                 <div className="absolute right-0 top-[calc(100%+14px)] z-50 w-[min(92vw,390px)] overflow-hidden rounded-2xl border border-white/15 bg-[#151821] p-4 shadow-[0_24px_70px_rgba(0,0,0,.6)]">
