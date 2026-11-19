@@ -100,7 +100,7 @@ export function LandingPage() {
       </main>
 
       <footer className="landing-page__footer">
-        <p>STREAM UG — Engineered by <span style={{ color: '#3b82f6', fontSize: '1.8em', fontWeight: 900, lineHeight: 1, verticalAlign: 'baseline' }}>V</span>ision.</p>
+        <p>STREAM UG — Engineered by <span style={{ color: '#3b82f6', fontSize: '1.8em', fontWeight: 900, lineHeight: 1, verticalAlign: 'baseline' }}>V</span><span style={{ color: '#7dd3fc', fontWeight: 600 }}>ision</span>.</p><a href="https://visiongrow.vercel.app" target="_blank" rel="noreferrer" style={{ color: '#38bdf8', fontSize: '0.85em', display: 'inline-block', marginTop: '4px' }}>visiongrow.vercel.app</a>
       </footer>
     </div>
   );
