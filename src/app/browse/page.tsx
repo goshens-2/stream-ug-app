@@ -111,7 +111,7 @@ export default function Browse() {
     const timer = window.setTimeout(() => {
       setActiveTrailerIndex((value) => (value + 1) % trailerMovies.length);
       setTrailerMuted(true);
-    }, 15000);
+    }, 30000);
     return () => window.clearTimeout(timer);
   }, [trailerPlaying, activeTrailer?.id, trailerMovies.length]);
   useEffect(() => {
@@ -207,7 +207,7 @@ export default function Browse() {
 
       <section className="mx-auto max-w-7xl px-5 pt-6">
         <div className="relative h-[clamp(260px,42vw,420px)] overflow-hidden rounded-[1.6rem] border border-white/10 bg-[#11151e] shadow-[0_22px_70px_rgba(0,0,0,.42)]">
-          {activeTrailer?.trailer_url && <video ref={trailerVideoRef} key={activeTrailer.id} src={activeTrailer.trailer_url} poster={activeTrailer.poster_url || undefined} autoPlay muted={trailerMuted} playsInline preload="auto" onCanPlay={() => { const playPromise = trailerVideoRef.current?.play(); playPromise?.catch(() => setTrailerNeedsTap(true)); }} onPlaying={() => { setTrailerPlaying(true); setTrailerNeedsTap(false); setTrailerFailed(false); }} onEnded={() => setActiveTrailerIndex((value) => (value + 1) % trailerMovies.length)} onError={() => { setTrailerPlaying(false); setTrailerFailed(true); }} className="absolute inset-0 h-full w-full object-cover" /> }
+          {activeTrailer?.trailer_url && <video ref={trailerVideoRef} key={activeTrailer.id} src={activeTrailer.trailer_url} poster={activeTrailer.poster_url || undefined} autoPlay muted={trailerMuted} playsInline loop preload="auto" onCanPlay={() => { const playPromise = trailerVideoRef.current?.play(); playPromise?.catch(() => setTrailerNeedsTap(true)); }} onPlaying={() => { setTrailerPlaying(true); setTrailerNeedsTap(false); setTrailerFailed(false); }} onError={() => { setTrailerPlaying(false); setTrailerFailed(true); }} className="absolute inset-0 h-full w-full object-cover" /> }
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/15" />
           <div className="absolute right-4 top-4 z-10 rounded-full border border-white/25 bg-black/60 px-4 py-2 text-[10px] font-black uppercase tracking-[.18em] text-white backdrop-blur-md sm:right-6 sm:top-6">{activeTrailer?.category_name || "Featured preview"}</div>
           <button type="button" onClick={() => setTrailerMuted((value) => !value)} className="absolute left-4 top-4 z-10 rounded-full border border-white/25 bg-black/55 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md sm:left-6 sm:top-6">{trailerMuted ? "Turn sound on" : "Mute preview"}</button>
