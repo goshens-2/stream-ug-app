@@ -87,7 +87,11 @@ export default function Browse() {
       movies: uploaded.filter((movie) => movie.category_id === category.id).slice(0, 4),
     })).filter((group) => group.movies.length > 0);
     if (groups.length) return groups;
-    return [{ id: "demo-featured", name: "Featured previews", movies: demoMovies.slice(0, 4) }];
+    return demoCategories.map((category) => ({
+      id: category.id,
+      name: category.name.replace(" (Sample)", ""),
+      movies: demoMovies.filter((movie) => movie.category_id === category.id).slice(0, 4),
+    })).filter((group) => group.movies.length > 0);
   }, [items, cats]);
   const activeGroup = trailerGroups[activeTrailerGroup % Math.max(1, trailerGroups.length)];
   useEffect(() => {
