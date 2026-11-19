@@ -1,14 +1,14 @@
 import { createClient as createSupabaseClient, type SupabaseClient } from "@supabase/supabase-js";
 
-const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || "https://bwzbtwclfvdgezyqvswr.supabase.co").trim().replace(/\/$/, "");
-const key = (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_fb8HkxyfjD0HGwthYXxYNA_riP2qpp1").trim();
+// Pin the production browser client to this project's public Supabase endpoint.
+// This avoids a stale/misconfigured Vercel NEXT_PUBLIC_* override silently
+// sending browser requests to a different or invalid Supabase project.
+const url = "https://bwzbtwclfvdgezyqvswr.supabase.co";
+const key = "sb_publishable_fb8HkxyfjD0HGwthYXxYNA_riP2qpp1";
 
 let browserClient: SupabaseClient | undefined;
 
 export function createClient(): SupabaseClient {
-  if (!url || !key) {
-    throw new Error("STREAM UG is not connected to its authentication service. Please contact support.");
-  }
   if (!browserClient) {
     browserClient = createSupabaseClient(url, key, {
       auth: {
