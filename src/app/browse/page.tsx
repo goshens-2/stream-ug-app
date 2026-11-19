@@ -110,7 +110,7 @@ export default function Browse() {
     if (!trailerPlaying || trailerMovies.length < 2) return;
     const timer = window.setTimeout(() => {
       setActiveTrailerIndex((value) => (value + 1) % trailerMovies.length);
-      setTrailerMuted((value) => value);
+      
     }, 30000);
     return () => window.clearTimeout(timer);
   }, [trailerPlaying, activeTrailer?.id, trailerMovies.length]);
