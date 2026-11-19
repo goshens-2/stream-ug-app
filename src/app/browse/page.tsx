@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type Movie = { id: string; title: string; description: string | null; poster_url: string | null; trailer_url?: string | null; release_year: number | null; duration_minutes: number | null; category_id: string | null; is_demo?: boolean };
@@ -25,10 +25,10 @@ const demoMovies: Movie[] = [
 ];
 
 const sampleTrailerMovies: Movie[] = [
-  { id: "open-bbb", title: "Big Buck Bunny", description: "A gentle giant rabbit faces three mischievous forest troublemakers.", poster_url: "https://picsum.photos/seed/stream-buck-bunny/1280/720", trailer_url: "https://video.blender.org/static/webseed/bf1f3fb5-b119-4f9f-9930-8e20e892b898-720.mp4", release_year: 2008, duration_minutes: 10, category_id: "sample-animation", is_demo: true },
-  { id: "open-sintel", title: "Sintel", description: "A lone wanderer crosses a frozen world in search of a dragon she once befriended.", poster_url: "https://picsum.photos/seed/stream-sintel/1280/720", trailer_url: "https://video.blender.org/static/webseed/0eb052d0-fd51-43e6-aa33-ecdbf77a5d40-720.mp4", release_year: 2010, duration_minutes: 15, category_id: "sample-fantasy", is_demo: true },
-  { id: "open-tears-steel", title: "Tears of Steel", description: "A science-fiction battle unfolds across a futuristic Amsterdam.", poster_url: "https://picsum.photos/seed/stream-tears-steel/1280/720", trailer_url: "https://video.blender.org/static/webseed/8533ea43-4271-4a57-9694-e9d0b35e1aa1-720.mp4", release_year: 2012, duration_minutes: 12, category_id: "sample-scifi", is_demo: true },
-  { id: "open-caminandes", title: "Caminandes: Gran Dillama", description: "A determined llama discovers that greener pastures come with a few surprises.", poster_url: "https://picsum.photos/seed/stream-caminandes/1280/720", trailer_url: "https://video.blender.org/static/webseed/fb70d459-48d2-4db5-adba-813c84f9200a-720.mp4", release_year: 2013, duration_minutes: 2, category_id: "sample-adventure", is_demo: true },
+  { id: "open-bbb", title: "Big Buck Bunny", description: "A gentle giant rabbit faces three mischievous forest troublemakers.", poster_url: "https://storage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg", trailer_url: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", release_year: 2008, duration_minutes: 10, category_id: "sample-animation", is_demo: true },
+  { id: "open-sintel", title: "Sintel", description: "A lone wanderer crosses a frozen world in search of a dragon she once befriended.", poster_url: "https://storage.googleapis.com/gtv-videos-bucket/sample/images/Sintel.jpg", trailer_url: "https://storage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4", release_year: 2010, duration_minutes: 15, category_id: "sample-fantasy", is_demo: true },
+  { id: "open-tears-steel", title: "Tears of Steel", description: "A science-fiction battle unfolds across a futuristic Amsterdam.", poster_url: "https://storage.googleapis.com/gtv-videos-bucket/sample/images/TearsOfSteel.jpg", trailer_url: "https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4", release_year: 2012, duration_minutes: 12, category_id: "sample-scifi", is_demo: true },
+  { id: "open-elephants-dream", title: "Elephants Dream", description: "Two characters explore a surreal mechanical world in this open animated short.", poster_url: "https://storage.googleapis.com/gtv-videos-bucket/sample/images/ElephantsDream.jpg", trailer_url: "https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4", release_year: 2006, duration_minutes: 11, category_id: "sample-adventure", is_demo: true },
 ];
 function SearchGlyph() {
   return <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.2 4.2"/></svg>;
@@ -56,6 +56,10 @@ export default function Browse() {
   const [activeTrailerIndex, setActiveTrailerIndex] = useState(0);
   const [suggestionIndex, setSuggestionIndex] = useState(0);
   const [trailerMuted, setTrailerMuted] = useState(true);
+  const [trailerPlaying, setTrailerPlaying] = useState(false);
+  const [trailerNeedsTap, setTrailerNeedsTap] = useState(false);
+  const [trailerFailed, setTrailerFailed] = useState(false);
+  const trailerVideoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
     const s = createClient();
@@ -98,10 +102,18 @@ export default function Browse() {
   const activeTrailer = trailerMovies[activeTrailerIndex % Math.max(1, trailerMovies.length)];
   const rotatingSuggestions = useMemo(() => allMovies.slice(0, 8), [allMovies]);
   useEffect(() => {
-    if (trailerMovies.length < 2) return;
-    const timer = window.setInterval(() => { setActiveTrailerIndex((value) => (value + 1) % trailerMovies.length); setTrailerMuted(true); }, 15000);
-    return () => window.clearInterval(timer);
-  }, [trailerMovies.length]);
+    setTrailerPlaying(false);
+    setTrailerNeedsTap(false);
+    setTrailerFailed(false);
+  }, [activeTrailer?.id]);
+  useEffect(() => {
+    if (!trailerPlaying || trailerMovies.length < 2) return;
+    const timer = window.setTimeout(() => {
+      setActiveTrailerIndex((value) => (value + 1) % trailerMovies.length);
+      setTrailerMuted(true);
+    }, 15000);
+    return () => window.clearTimeout(timer);
+  }, [trailerPlaying, activeTrailer?.id, trailerMovies.length]);
   useEffect(() => {
     if (rotatingSuggestions.length < 2) return;
     const timer = window.setInterval(() => setSuggestionIndex((value) => (value + 1) % rotatingSuggestions.length), 4200);
@@ -195,10 +207,11 @@ export default function Browse() {
 
       <section className="mx-auto max-w-7xl px-5 pt-6">
         <div className="relative h-[clamp(260px,42vw,420px)] overflow-hidden rounded-[1.6rem] border border-white/10 bg-[#11151e] shadow-[0_22px_70px_rgba(0,0,0,.42)]">
-          {activeTrailer?.trailer_url && <video key={activeTrailer.id} src={activeTrailer.trailer_url} poster={activeTrailer.poster_url || undefined} autoPlay muted={trailerMuted} playsInline preload="auto" onEnded={() => setActiveTrailerIndex((value) => (value + 1) % trailerMovies.length)} onError={() => setActiveTrailerIndex((value) => (value + 1) % trailerMovies.length)} className="absolute inset-0 h-full w-full object-cover" /> }
+          {activeTrailer?.trailer_url && <video ref={trailerVideoRef} key={activeTrailer.id} src={activeTrailer.trailer_url} poster={activeTrailer.poster_url || undefined} autoPlay muted={trailerMuted} playsInline preload="auto" onCanPlay={() => { const playPromise = trailerVideoRef.current?.play(); playPromise?.catch(() => setTrailerNeedsTap(true)); }} onPlaying={() => { setTrailerPlaying(true); setTrailerNeedsTap(false); setTrailerFailed(false); }} onEnded={() => setActiveTrailerIndex((value) => (value + 1) % trailerMovies.length)} onError={() => { setTrailerPlaying(false); setTrailerFailed(true); }} className="absolute inset-0 h-full w-full object-cover" /> }
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/15" />
           <div className="absolute right-4 top-4 z-10 rounded-full border border-white/25 bg-black/60 px-4 py-2 text-[10px] font-black uppercase tracking-[.18em] text-white backdrop-blur-md sm:right-6 sm:top-6">{activeTrailer?.category_name || "Featured preview"}</div>
           <button type="button" onClick={() => setTrailerMuted((value) => !value)} className="absolute left-4 top-4 z-10 rounded-full border border-white/25 bg-black/55 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md sm:left-6 sm:top-6">{trailerMuted ? "Turn sound on" : "Mute preview"}</button>
+          {(trailerNeedsTap || trailerFailed) && <div className="absolute inset-0 z-20 grid place-items-center bg-black/75 px-6 text-center"><div><p className="text-sm font-bold text-white">{trailerFailed ? "This preview could not be loaded." : "Tap to start the preview."}</p><button type="button" onClick={() => { if (trailerFailed) { setActiveTrailerIndex((value) => (value + 1) % trailerMovies.length); } else { const playPromise = trailerVideoRef.current?.play(); playPromise?.then(() => setTrailerNeedsTap(false)).catch(() => setTrailerNeedsTap(true)); } }} className="mt-4 rounded-full bg-[#e73545] px-5 py-3 text-xs font-bold text-white">{trailerFailed ? "Try next preview" : "Play preview"}</button></div></div>}
           <div className="absolute inset-0 z-[1] flex items-center justify-center px-6 text-center">
             <div className="max-w-2xl">
               <p className="text-[10px] font-black uppercase tracking-[.28em] text-[#ff9ba4]">STREAM UG · Featured preview</p>
