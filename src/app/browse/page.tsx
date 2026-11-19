@@ -11,6 +11,9 @@ const demoCategories: Category[] = [
   { id: "demo-drama", name: "Drama (Sample)", slug: "demo-drama" },
   { id: "demo-comedy", name: "Comedy (Sample)", slug: "demo-comedy" },
   { id: "demo-animation", name: "Animation (Sample)", slug: "demo-animation" },
+  { id: "sample-fantasy", name: "Fantasy (Open Sample)", slug: "sample-fantasy" },
+  { id: "sample-scifi", name: "Sci-Fi (Open Sample)", slug: "sample-scifi" },
+  { id: "sample-adventure", name: "Adventure (Open Sample)", slug: "sample-adventure" },
 ];
 const demoMovies: Movie[] = [
   { id: "demo-movie-1", title: "The Last Mission", description: "A fearless team races against time to protect their city. Sample movie for dashboard testing.", poster_url: "https://picsum.photos/seed/stream-last-mission/480/720", release_year: 2025, duration_minutes: 116, category_id: "demo-action", is_demo: true },
@@ -79,7 +82,7 @@ export default function Browse() {
 
   const allCategories = useMemo(() => [...cats, ...demoCategories.filter((demo) => !cats.some((real) => real.name.toLowerCase() === demo.name.toLowerCase()))], [cats]);
   const visibleCategories = showAllCategories ? allCategories : allCategories.slice(0, 6);
-  const allMovies = useMemo(() => [...items, ...demoMovies], [items]);
+  const allMovies = useMemo(() => [...items, ...demoMovies, ...sampleTrailerMovies], [items]);
   const filtered = useMemo(() => allMovies.filter((x) =>
     (cat === "all" || x.category_id === cat) &&
     (x.title.toLowerCase().includes(q.toLowerCase()) || (x.description || "").toLowerCase().includes(q.toLowerCase()))
@@ -239,7 +242,7 @@ export default function Browse() {
         <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {loading ? Array.from({ length: 10 }, (_, i) => <div key={i} className="aspect-[2/3] animate-pulse rounded-2xl bg-white/5" />) : filtered.map((x) => {
             const card = <><div className="relative aspect-[2/3] overflow-hidden bg-[#1c2029]">{x.poster_url ? <img src={x.poster_url} alt={x.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /> : <div className="flex h-full items-end bg-gradient-to-br from-slate-700 to-slate-950 p-4"><span className="text-lg font-black">{x.title}</span></div>}{x.is_demo && <span className="absolute left-3 top-3 rounded-full bg-[#e73545] px-2.5 py-1 text-[10px] font-bold tracking-wide">DEMO</span>}</div><div className="p-4"><h3 className="line-clamp-1 text-sm font-bold">{x.title}</h3><p className="mt-1 text-xs text-white/50">{x.release_year || "New"}{x.duration_minutes ? " · " + x.duration_minutes + " min" : ""}</p><p className="mt-2 line-clamp-2 text-xs leading-5 text-white/50">{x.description}</p><p className="mt-3 text-xs font-bold text-[#ff8791]">{x.is_demo ? "Sample title · Preview only" : "View title →"}</p></div></>;
-            return x.is_demo ? <div key={x.id} className="group overflow-hidden rounded-2xl border border-dashed border-white/15 bg-[#111319]">{card}</div> : <Link key={x.id} href={"/content/" + x.id} className="group overflow-hidden rounded-2xl border border-white/10 bg-[#111319] transition hover:-translate-y-1 hover:border-white/25">{card}</Link>;
+            return x.is_demo && x.trailer_url ? <button key={x.id} type="button" onClick={() => { const index = trailerMovies.findIndex((movie) => movie.id === x.id); if (index >= 0) { setActiveTrailerIndex(index); setTrailerMuted(true); window.scrollTo({ top: 0, behavior: "smooth" }); } }} className="group overflow-hidden rounded-2xl border border-dashed border-white/15 bg-[#111319] text-left transition hover:-translate-y-1 hover:border-[#ff8791]/60">{card}</button> : x.is_demo ? <div key={x.id} className="group overflow-hidden rounded-2xl border border-dashed border-white/15 bg-[#111319]">{card}</div> : <Link key={x.id} href={"/content/" + x.id} className="group overflow-hidden rounded-2xl border border-white/10 bg-[#111319] transition hover:-translate-y-1 hover:border-white/25">{card}</Link>;
           })}
         </div>
         {!loading && filtered.length === 0 && <p className="py-20 text-center text-sm text-white/50">No titles found. Check back soon.</p>}
