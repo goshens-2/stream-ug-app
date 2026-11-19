@@ -100,7 +100,7 @@ export function LandingPage() {
       </main>
 
       <footer className="landing-page__footer">
-        <p>STREAM UG — Engineered with VISION.</p>
+        <p>STREAM UG — Engineered by <span style={{ color: '#3b82f6', fontSize: '1.8em', fontWeight: 900, lineHeight: 1, verticalAlign: 'baseline' }}>V</span>ision.</p>
       </footer>
     </div>
   );
