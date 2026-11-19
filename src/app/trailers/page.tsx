@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import SiteHeader from "@/components/site-header";
+import SiteHeader from "@/src/components/site-header";
 import { createClient } from "@/lib/supabase/client";
 
 type Trailer = { id: string; title: string; description: string | null; poster_url: string | null; trailer_url: string; release_year: number | null; duration_minutes: number | null; category?: string; attribution?: string; is_demo?: boolean };
