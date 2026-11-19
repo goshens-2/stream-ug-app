@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import SiteHeader from "@/components/site-header";
+import SiteHeader from "@/src/components/site-header";
 import {useParams} from "next/navigation";
 import {useEffect,useState} from "react";
 import {createClient} from "@/lib/supabase/client";
