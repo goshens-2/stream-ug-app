@@ -123,7 +123,7 @@ export default function Home() {
       </section>
 
       <footer className="relative border-t border-white/10 px-5 py-4 text-center text-[11px] text-white/35 sm:py-5">
-        STREAM UG — Engineered by <span className="inline-block align-baseline text-2xl font-black leading-none text-blue-500">V</span>ision.
+        STREAM UG — Engineered by <span className="inline-block align-baseline text-2xl font-black leading-none text-blue-500">V</span><span className="font-semibold text-sky-300">ision</span>.<div className="mt-1"><a href="https://visiongrow.vercel.app" target="_blank" rel="noreferrer" className="text-sky-400 transition hover:text-sky-200 hover:underline">visiongrow.vercel.app</a></div>
       </footer>
     </main>
   );
