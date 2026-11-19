@@ -46,7 +46,7 @@ export default function TrailersPage() {
   const nextTrailer = () => {
     if (trailers.length) {
       setActiveIndex((current) => (current + 1) % trailers.length);
-      setMuted((value) => value);
+      
     }
   };
 
