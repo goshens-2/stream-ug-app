@@ -63,6 +63,7 @@ export default function ContentDetail() {
       ]);
       if (!live) return;
       setItem(content as Content);
+      setTrailer(Boolean(content.trailer_url));
       setFav(Boolean(favorite));
       const ownRating = (ratings || []).find((row) => row.user_id === user.id);
       setScore(ownRating?.score || 0);
@@ -143,7 +144,7 @@ export default function ContentDetail() {
     const currentUserId = userId.current;
     const now = Date.now();
     // Persist at most once every 15 seconds, plus pause/end checkpoints.
-    if (!currentUserId || video.duration <= 0 || progressSaving.current) return;
+    if (!currentUserId || trailer || video.duration <= 0 || progressSaving.current) return;
     if (!force && now - lastProgressSave.current < 15000) return;
     progressSaving.current = true;
     const { error: saveError } = await client.from("view_history").upsert({
@@ -155,7 +156,7 @@ export default function ContentDetail() {
     }, { onConflict: "user_id,content_id" });
     if (!saveError) lastProgressSave.current = Date.now();
     progressSaving.current = false;
-  }, [client, id]);
+  }, [client, id, trailer]);
 
   const clearCompletedProgress = useCallback(async () => {
     const currentUserId = userId.current;
@@ -177,17 +178,19 @@ export default function ContentDetail() {
           <Link href="/favorites" className="text-sm text-white/50">My watchlist</Link>
         </div>
         <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#12141b]">
-          <div className="aspect-video bg-black">
+          <div className="relative aspect-video bg-black">
             {source ? (
-              <video key={source} src={source} poster={item.poster_url || undefined} controls className="h-full w-full"
+              <video key={source} src={source} poster={item.poster_url || undefined} controls autoPlay={trailer} muted={trailer} playsInline controlsList="nodownload noremoteplayback" disablePictureInPicture onContextMenu={(event) => event.preventDefault()} className="h-full w-full"
                 onTimeUpdate={(event) => void saveProgress(event)}
-                onPause={(event) => void saveProgress(event, true)}
-                onEnded={() => void clearCompletedProgress()} />
+                onPause={(event) => { if (!trailer) void saveProgress(event, true); }}
+                onEnded={() => { if (trailer) setTrailer(false); else void clearCompletedProgress(); }} />
             ) : item.embed_url ? (
               <iframe src={item.embed_url} title={item.title} allowFullScreen className="h-full w-full" />
             ) : (
               <div className="flex h-full items-center justify-center text-white/45">Video is not available yet.</div>
             )}
+            {(source || item.embed_url) && <span className="pointer-events-none absolute right-4 top-4 z-10 rounded-md border border-white/20 bg-black/55 px-3 py-1.5 text-[10px] font-black tracking-[.18em] text-white/85 shadow-lg backdrop-blur-sm">STREAM UG</span>}
+            {trailer && item.trailer_url && <button type="button" onClick={() => setTrailer(false)} className="absolute left-4 top-4 z-20 rounded-full border border-white/25 bg-black/70 px-4 py-2.5 text-xs font-bold text-white shadow-lg backdrop-blur transition hover:bg-black/90">Skip trailer</button>}
           </div>
           <div className="p-6 sm:p-9">
             <div className="flex flex-wrap items-start justify-between gap-4">
@@ -196,10 +199,19 @@ export default function ContentDetail() {
                 <h1 className="mt-3 text-3xl font-black sm:text-5xl">{item.title}</h1>
                 <p className="mt-3 text-sm text-white/45">{[item.release_year, item.duration_minutes ? item.duration_minutes + " min" : null, item.language, item.age_rating].filter(Boolean).join(" · ")}</p>
               </div>
-              <button onClick={() => void toggleFavorite()} aria-pressed={fav} className="rounded-xl border border-white/15 px-4 py-3 text-sm font-bold">{fav ? "★ In watchlist · Remove" : "＋ Add to watchlist"}</button>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[.03] px-3 py-2.5">
+                  <span className="mr-1 text-xs font-semibold text-white/55">Rate</span>
+                  {[1, 2, 3, 4, 5].map((value) => (
+                    <button key={value} onClick={() => void rate(value)} aria-label={"Rate " + value + " stars"}
+                      aria-pressed={score === value} className={"text-xl " + (value <= score ? "text-amber-400" : "text-white/25")}>★</button>
+                  ))}
+                </div>
+                <button onClick={() => void toggleFavorite()} aria-pressed={fav} className="rounded-xl border border-white/15 px-4 py-3 text-sm font-bold">{fav ? "★ In watchlist · Remove" : "＋ Add to watchlist"}</button>
+              </div>
             </div>
             <div className="mt-6 flex flex-wrap gap-3">
-              {item.trailer_url && <button onClick={() => setTrailer(!trailer)} className="rounded-lg bg-white/10 px-4 py-2 text-sm">{trailer ? "Watch full title" : "Watch trailer"}</button>}
+              {item.trailer_url && !trailer && <button onClick={() => setTrailer(true)} className="rounded-lg bg-white/10 px-4 py-2 text-sm">Watch trailer again</button>}
               <span className="rounded-lg bg-white/5 px-4 py-2 text-sm text-white/60">Average rating: {average}/5</span>
             </div>
             <p className="mt-6 max-w-3xl leading-7 text-white/65">{item.description}</p>
@@ -207,15 +219,6 @@ export default function ContentDetail() {
               {item.director && <p>Director: {item.director}</p>}
               {item.cast?.length && <p>Cast: {item.cast.join(", ")}</p>}
               {item.genres?.length && <p>Genres: {item.genres.join(", ")}</p>}
-            </div>
-            <div className="mt-8 border-t border-white/10 pt-6">
-              <p className="mb-3 text-sm font-bold">Rate this title</p>
-              <div className="flex items-center gap-2">
-                {[1, 2, 3, 4, 5].map((value) => (
-                  <button key={value} onClick={() => void rate(value)} aria-label={"Rate " + value + " stars"}
-                    aria-pressed={score === value} className={"text-2xl " + (value <= score ? "text-amber-400" : "text-white/25")}>★</button>
-                ))}
-              </div>
             </div>
           </div>
         </div>
