@@ -62,7 +62,7 @@ export default function Login() {
             <a href="https://visiongrow.vercel.app" target="_blank" rel="noopener noreferrer" className="group mt-4 inline-flex items-center gap-3 rounded-full border border-blue-400/30 bg-blue-500/10 px-4 py-2.5 text-left shadow-lg shadow-blue-950/20 backdrop-blur-sm transition duration-300 hover:-translate-y-0.5 hover:border-blue-300/70 hover:bg-blue-500/20">
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/20 text-sm font-black text-blue-300">V</span>
               <span className="flex flex-col">
-                <span className="text-[9px] font-bold uppercase tracking-[.22em] text-white/55">Explore our creative studio</span>
+                <span className="text-[9px] font-bold uppercase tracking-[.22em] text-white/55">Explore Vision</span>
                 <span className="text-xs font-semibold tracking-wide text-blue-200 group-hover:text-white sm:text-sm">visiongrow.vercel.app</span>
               </span>
               <span aria-hidden="true" className="ml-1 text-blue-300 transition-transform group-hover:translate-x-1 group-hover:-translate-y-0.5">↗</span>
