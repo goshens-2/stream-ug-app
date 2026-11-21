@@ -4,13 +4,14 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-type Movie = { id: string; title: string; description: string | null; poster_url: string | null; trailer_url?: string | null; video_url?: string | null; release_year: number | null; duration_minutes: number | null; category_id: string | null; is_demo?: boolean };
+type Movie = { id: string; title: string; description: string | null; poster_url: string | null; trailer_url?: string | null; video_url?: string | null; embed_url?: string | null; release_year: number | null; duration_minutes: number | null; category_id: string | null; is_demo?: boolean };
 type Category = { id: string; name: string; slug: string };
 const demoCategories: Category[] = [
   { id: "demo-action", name: "Action (Sample)", slug: "demo-action" },
   { id: "demo-drama", name: "Drama (Sample)", slug: "demo-drama" },
   { id: "demo-comedy", name: "Comedy (Sample)", slug: "demo-comedy" },
   { id: "demo-animation", name: "Animation (Sample)", slug: "demo-animation" },
+  { id: "sample-animation", name: "Animation (Open Sample)", slug: "sample-animation" },
   { id: "sample-fantasy", name: "Fantasy (Open Sample)", slug: "sample-fantasy" },
   { id: "sample-scifi", name: "Sci-Fi (Open Sample)", slug: "sample-scifi" },
   { id: "sample-adventure", name: "Adventure (Open Sample)", slug: "sample-adventure" },
@@ -73,7 +74,7 @@ export default function Browse() {
       userId.current = session.user.id;
       const [{ data: p }, { data: c }, { data: k }, { count }, { data: historyRows }] = await Promise.all([
         s.from("profiles").select("name,is_admin").eq("id", session.user.id).maybeSingle(),
-        s.from("content").select("id,title,description,poster_url,trailer_url,video_url,release_year,duration_minutes,category_id").order("created_at", { ascending: false }),
+        s.from("content").select("id,title,description,poster_url,trailer_url,video_url,embed_url,release_year,duration_minutes,category_id").order("created_at", { ascending: false }),
         s.from("categories").select("id,name,slug").order("name"),
         s.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", session.user.id).eq("read", false),
         s.from("view_history").select("progress_seconds,duration_seconds").eq("user_id", session.user.id),
@@ -92,18 +93,28 @@ export default function Browse() {
 
   const allCategories = useMemo(() => [...cats, ...demoCategories.filter((demo) => !cats.some((real) => real.name.toLowerCase() === demo.name.toLowerCase()))], [cats]);
   const visibleCategories = showAllCategories ? allCategories : allCategories.slice(0, 6);
-  const allMovies = useMemo(() => [...items, ...demoMovies, ...sampleTrailerMovies], [items]);
-  const filtered = useMemo(() => allMovies.filter((x) =>
-    (cat === "all" || x.category_id === cat) &&
-    (x.title.toLowerCase().includes(q.toLowerCase()) || (x.description || "").toLowerCase().includes(q.toLowerCase()))
-  ), [allMovies, cat, q]);
+  const allMovies = useMemo(() => [
+    ...items,
+    ...demoMovies,
+    ...sampleTrailerMovies.filter((sample) => !items.some((item) => item.title.toLowerCase() === sample.title.toLowerCase())),
+  ], [items]);
+  const selectedCategoryName = cat === "all"
+    ? "All categories"
+    : allCategories.find((category) => category.id === cat)?.name || "Selected category";
+  const filtered = useMemo(() => allMovies.filter((x) => {
+    const categoryName = cats.find((category) => category.id === x.category_id)?.name
+      || demoCategories.find((category) => category.id === x.category_id)?.name || "";
+    const term = q.trim().toLowerCase();
+    return (cat === "all" || x.category_id === cat)
+      && (!term || x.title.toLowerCase().includes(term) || (x.description || "").toLowerCase().includes(term) || categoryName.toLowerCase().includes(term));
+  }), [allMovies, cat, q, cats]);
   const suggestions = useMemo(() => {
     const term = q.trim().toLowerCase();
     return allMovies.filter((movie) => !term || movie.title.toLowerCase().includes(term) || (movie.description || "").toLowerCase().includes(term)).slice(0, 7);
   }, [allMovies, q]);
   const trailerMovies = useMemo(() => [
     ...items.filter((movie) => !!movie.trailer_url).map((movie) => ({ ...movie, category_name: cats.find((category) => category.id === movie.category_id)?.name || "STREAM UG", attribution: "STREAM UG" })),
-    ...sampleTrailerMovies.map((movie) => ({ ...movie, category_name: movie.category_id === "sample-animation" ? "Animation" : movie.category_id === "sample-fantasy" ? "Fantasy" : movie.category_id === "sample-scifi" ? "Sci-Fi" : "Adventure", attribution: "Blender Foundation · CC BY 3.0" })),
+    ...sampleTrailerMovies.filter((sample) => !items.some((item) => item.title.toLowerCase() === sample.title.toLowerCase())).map((movie) => ({ ...movie, category_name: movie.category_id === "sample-animation" ? "Animation" : movie.category_id === "sample-fantasy" ? "Fantasy" : movie.category_id === "sample-scifi" ? "Sci-Fi" : "Adventure", attribution: "Blender Foundation · CC BY 3.0" })),
   ], [items, cats]);
   const activeTrailer = trailerMovies[activeTrailerIndex % Math.max(1, trailerMovies.length)];
   const rotatingSuggestions = useMemo(() => allMovies.slice(0, 8), [allMovies]);
@@ -269,12 +280,14 @@ export default function Browse() {
         `}</style>
 
         <div id="library-results" className="mt-8 flex items-center justify-between scroll-mt-28">
-          <h2 className="text-xl font-bold text-white">Explore the library</h2><span className="text-xs text-white/55">{filtered.length} titles</span>
+          <div><h2 className="text-xl font-bold text-white">Explore the library</h2><p className="mt-1 text-xs text-[#ff9ba4]">Showing: {selectedCategoryName}</p></div><span className="text-xs text-white/55">{filtered.length} titles</span>
         </div>
         <p className="mt-2 text-xs text-white/45">Sample titles are for testing only and are not saved to your account.</p>
         <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {loading ? Array.from({ length: 10 }, (_, i) => <div key={i} className="aspect-[2/3] animate-pulse rounded-2xl bg-white/5" />) : filtered.map((x) => {
-            const card = <><div className="relative aspect-[2/3] overflow-hidden bg-[#1c2029]">{x.poster_url ? <img src={x.poster_url} alt={x.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /> : <div className="flex h-full items-end bg-gradient-to-br from-slate-700 to-slate-950 p-4"><span className="text-lg font-black">{x.title}</span></div>}{x.is_demo && <span className="absolute left-3 top-3 rounded-full bg-[#e73545] px-2.5 py-1 text-[10px] font-bold tracking-wide">DEMO</span>}{!x.is_demo && <span className="absolute inset-0 grid place-items-center bg-black/0 transition group-hover:bg-black/25"><span className="grid h-14 w-14 place-items-center rounded-full border border-white/60 bg-black/65 text-xl text-white shadow-xl backdrop-blur-sm">▶</span></span>}</div><div className="p-4"><h3 className="line-clamp-1 text-sm font-bold">{x.title}</h3><p className="mt-1 text-xs text-white/50">{x.release_year || "New"}{x.duration_minutes ? " · " + x.duration_minutes + " min" : ""}</p><p className="mt-2 line-clamp-2 text-xs leading-5 text-white/50">{x.description}</p><p className="mt-3 text-xs font-bold text-[#ff8791]">{x.is_demo ? "Sample preview" : "▶ Play movie"}</p></div></>;
+            const categoryLabel = cats.find((category) => category.id === x.category_id)?.name
+              || demoCategories.find((category) => category.id === x.category_id)?.name || "Uncategorised";
+            const card = <><div className="relative aspect-[2/3] overflow-hidden bg-[#1c2029]">{x.poster_url ? <img src={x.poster_url} alt={x.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /> : <div className="flex h-full items-end bg-gradient-to-br from-slate-700 to-slate-950 p-4"><span className="text-lg font-black">{x.title}</span></div>}{x.is_demo && <span className="absolute left-3 top-3 rounded-full bg-[#e73545] px-2.5 py-1 text-[10px] font-bold tracking-wide">DEMO</span>}{!x.is_demo && (x.video_url || x.embed_url) && <span className="pointer-events-none absolute inset-0 grid place-items-center bg-black/10 transition group-hover:bg-black/25"><span className="grid h-14 w-14 place-items-center rounded-full border border-white/60 bg-black/65 text-xl text-white shadow-xl backdrop-blur-sm">▶</span></span>}</div><div className="p-4"><h3 className="line-clamp-1 text-sm font-bold">{x.title}</h3><p className="mt-1 text-xs text-white/50">{x.release_year || "New"}{x.duration_minutes ? " · " + x.duration_minutes + " min" : ""}</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-[#ff9ba4]">{categoryLabel}</p><p className="mt-2 line-clamp-2 text-xs leading-5 text-white/50">{x.description}</p><p className="mt-3 text-xs font-bold text-[#ff8791]">{x.is_demo ? "Sample preview" : x.video_url || x.embed_url ? "▶ Play movie" : x.trailer_url ? "▶ Watch preview" : "View details"}</p></div></>;
             return x.is_demo && x.trailer_url ? <button key={x.id} type="button" onClick={() => { const index = trailerMovies.findIndex((movie) => movie.id === x.id); if (index >= 0) { setActiveTrailerIndex(index); setTrailerMuted(true); window.scrollTo({ top: 0, behavior: "smooth" }); } }} className="group overflow-hidden rounded-2xl border border-dashed border-white/15 bg-[#111319] text-left transition hover:-translate-y-1 hover:border-[#ff8791]/60">{card}</button> : x.is_demo ? <div key={x.id} className="group overflow-hidden rounded-2xl border border-dashed border-white/15 bg-[#111319]">{card}</div> : <article key={x.id} className="group overflow-hidden rounded-2xl border border-white/10 bg-[#111319] transition hover:-translate-y-1 hover:border-white/25"><Link href={"/content/" + x.id} className="block">{card}</Link><div className="px-4 pb-4"><Link href={"/content/" + x.id + "?watchlist=add"} className="block rounded-lg border border-white/15 px-3 py-2.5 text-center text-xs font-bold text-white/80 transition hover:border-[#f04455]/70 hover:bg-[#f04455]/10 hover:text-white">＋ Add to watchlist</Link></div></article>;
           })}
         </div>
