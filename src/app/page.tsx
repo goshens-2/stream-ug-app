@@ -57,7 +57,7 @@ export default function Home() {
           STREAM<span className="text-[#e73545]"> UG</span>
         </Link>
         <nav className="flex items-center gap-2.5 text-sm sm:gap-3">
-          <Link href="/watch-with-me" className="hidden rounded-full border border-white/15 px-4 py-2 font-semibold text-white/80 transition hover:bg-white/10 sm:inline-flex">Watch With Me</Link>
+          <Link href="/watch-with-me" className="inline-flex rounded-full border border-white/15 px-3 py-2 font-semibold text-white/80 transition hover:bg-white/10 sm:px-4">Watch With Me</Link>
           <Link
             href="/login"
             className="rounded-full border border-[#e73545]/70 px-4 py-2 font-semibold text-white transition hover:border-[#ff6876] hover:bg-[#e73545]/10 sm:px-5"
