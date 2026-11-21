@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-type Movie = { id: string; title: string; description: string | null; poster_url: string | null; trailer_url?: string | null; release_year: number | null; duration_minutes: number | null; category_id: string | null; is_demo?: boolean };
+type Movie = { id: string; title: string; description: string | null; poster_url: string | null; trailer_url?: string | null; video_url?: string | null; release_year: number | null; duration_minutes: number | null; category_id: string | null; is_demo?: boolean };
 type Category = { id: string; name: string; slug: string };
 const demoCategories: Category[] = [
   { id: "demo-action", name: "Action (Sample)", slug: "demo-action" },
@@ -69,7 +69,7 @@ export default function Browse() {
       if (!user) { window.location.replace("/login"); return; }
       const [{ data: p }, { data: c }, { data: k }, { count }] = await Promise.all([
         s.from("profiles").select("name,is_admin").eq("id", user.id).maybeSingle(),
-        s.from("content").select("id,title,description,poster_url,trailer_url,release_year,duration_minutes,category_id").order("created_at", { ascending: false }),
+        s.from("content").select("id,title,description,poster_url,trailer_url,video_url,release_year,duration_minutes,category_id").order("created_at", { ascending: false }),
         s.from("categories").select("id,name,slug").order("name"),
         s.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("read", false),
       ]);
@@ -110,7 +110,7 @@ export default function Browse() {
     if (!trailerPlaying || trailerMovies.length < 2) return;
     const timer = window.setTimeout(() => {
       setActiveTrailerIndex((value) => (value + 1) % trailerMovies.length);
-      setTrailerMuted(true);
+      
     }, 30000);
     return () => window.clearTimeout(timer);
   }, [trailerPlaying, activeTrailer?.id, trailerMovies.length]);
@@ -210,14 +210,14 @@ export default function Browse() {
           {activeTrailer?.trailer_url && <video ref={trailerVideoRef} key={activeTrailer.id} src={activeTrailer.trailer_url} poster={activeTrailer.poster_url || undefined} autoPlay muted={trailerMuted} playsInline loop preload="auto" onCanPlay={() => { const playPromise = trailerVideoRef.current?.play(); playPromise?.catch(() => setTrailerNeedsTap(true)); }} onPlaying={() => { setTrailerPlaying(true); setTrailerNeedsTap(false); setTrailerFailed(false); }} onError={() => { setTrailerPlaying(false); setTrailerFailed(true); }} className="absolute inset-0 h-full w-full object-cover" /> }
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/15" />
           <div className="absolute right-4 top-4 z-10 rounded-full border border-white/25 bg-black/60 px-4 py-2 text-[10px] font-black uppercase tracking-[.18em] text-white backdrop-blur-md sm:right-6 sm:top-6">{activeTrailer?.category_name || "Featured preview"}</div>
-          <button type="button" onClick={() => { setTrailerMuted((value) => { const next = !value; if (!next && trailerVideoRef.current) { trailerVideoRef.current.muted = false; void trailerVideoRef.current.play().catch(() => setTrailerNeedsTap(true)); } else if (trailerVideoRef.current) { trailerVideoRef.current.muted = true; } return next; }) }} className="absolute left-4 top-4 z-10 rounded-full border border-white/25 bg-black/55 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md sm:left-6 sm:top-6">{trailerMuted ? "Turn sound on" : "Mute preview"}</button>
+          <button type="button" aria-label={trailerMuted ? "Turn preview sound on" : "Mute preview"} title={trailerMuted ? "Turn sound on" : "Mute sound"} onClick={() => { setTrailerMuted((value) => { const next = !value; if (trailerVideoRef.current) { trailerVideoRef.current.muted = next; if (!next) void trailerVideoRef.current.play().catch(() => setTrailerNeedsTap(true)); } return next; }); }} className="absolute left-4 top-4 z-10 grid h-11 w-11 place-items-center rounded-full border border-white/25 bg-black/60 text-white shadow-lg backdrop-blur-md transition hover:bg-black/80 sm:left-6 sm:top-6"><svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{trailerMuted ? <><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="m16 9 5 6m0-6-5 6"/></> : <><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7m2.5-9.5a8.5 8.5 0 0 1 0 12"/></>}</svg></button>
           {(trailerNeedsTap || trailerFailed) && <div className="absolute inset-0 z-20 grid place-items-center bg-black/75 px-6 text-center"><div><p className="text-sm font-bold text-white">{trailerFailed ? "This preview could not be loaded." : "Tap to start the preview."}</p><button type="button" onClick={() => { if (trailerFailed) { setActiveTrailerIndex((value) => (value + 1) % trailerMovies.length); } else { const playPromise = trailerVideoRef.current?.play(); playPromise?.then(() => setTrailerNeedsTap(false)).catch(() => setTrailerNeedsTap(true)); } }} className="mt-4 rounded-full bg-[#e73545] px-5 py-3 text-xs font-bold text-white">{trailerFailed ? "Try next preview" : "Play preview"}</button></div></div>}
           <div className="absolute inset-0 z-[1] flex items-center justify-center px-6 text-center">
             <div className="max-w-2xl">
               <p className="text-[10px] font-black uppercase tracking-[.28em] text-[#ff9ba4]">STREAM UG · Featured preview</p>
               <h1 className="mt-3 text-3xl font-black tracking-tight text-white drop-shadow-lg sm:text-5xl">{activeTrailer?.title || "Discover your next movie"}</h1>
               <p className="mx-auto mt-3 max-w-xl text-xs leading-6 text-white/80 sm:text-sm">{activeTrailer?.description}</p>
-              <p className="mt-3 text-[9px] font-semibold uppercase tracking-[.16em] text-white/55">{activeTrailer?.attribution || "STREAM UG"} · Preview plays automatically</p>
+              <p className="mt-3 text-[9px] font-semibold uppercase tracking-[.16em] text-white/55">{activeTrailer?.attribution || "STREAM UG"} · Preview plays automatically</p><div className="mt-5 flex flex-wrap justify-center gap-3"><Link href="/trailers" className="rounded-full border border-white/35 bg-white/10 px-5 py-2.5 text-xs font-bold text-white backdrop-blur transition hover:bg-white/20">See trailer</Link>{activeTrailer?.id && !activeTrailer.is_demo && activeTrailer.video_url ? <Link href={"/content/" + activeTrailer.id} className="rounded-full bg-[#e73545] px-5 py-2.5 text-xs font-bold text-white shadow-lg transition hover:bg-[#f04455]">Watch full movie</Link> : <button type="button" disabled className="cursor-not-allowed rounded-full bg-white/10 px-5 py-2.5 text-xs font-bold text-white/45" title="Full movie is not available for this preview">Watch full movie</button>}</div>
             </div>
           </div>
           <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2">
