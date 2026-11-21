@@ -77,7 +77,7 @@ export default function Browse() {
       ]);
       if (!live) return;
       if (p?.is_admin) { window.location.replace("/admin"); return; }
-      setName(p?.name || user.email?.split("@")[0] || "there");
+      setName(p?.name || session.user.email?.split("@")[0] || "there");
       setItems((c || []) as Movie[]);
       setCats((k || []) as Category[]);
       setUnread(count || 0);
