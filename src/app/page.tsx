@@ -57,7 +57,6 @@ export default function Home() {
           STREAM<span className="text-[#e73545]"> UG</span>
         </Link>
         <nav className="flex items-center gap-2.5 text-sm sm:gap-3">
-          <Link href="/watch-with-me" className="inline-flex rounded-full border border-white/15 px-3 py-2 font-semibold text-white/80 transition hover:bg-white/10 sm:px-4">Watch With Me</Link>
           <Link
             href="/login"
             className="rounded-full border border-[#e73545]/70 px-4 py-2 font-semibold text-white transition hover:border-[#ff6876] hover:bg-[#e73545]/10 sm:px-5"
@@ -96,16 +95,10 @@ export default function Home() {
             <p className="mt-4 max-w-lg text-sm leading-7 text-white/70 sm:mt-5 sm:text-base sm:leading-8">
               {slide.copy}
             </p>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <Link href="/trailers" className="rounded-full border border-white/25 px-5 py-3 text-xs font-bold text-white transition hover:border-white/50 hover:bg-white/10">See trailer</Link>
-              <Link href="/browse" className="rounded-full bg-[#e73545] px-5 py-3 text-xs font-bold text-white transition hover:bg-[#f04455]">Watch full movie</Link>
-            </div>
           </div>
 
           <div className="relative mt-10 flex items-center justify-between gap-4">
-            <p className="text-[10px] font-bold tracking-[.22em] text-white/45">
-              STREAM UG
-            </p>
+            <p className="text-[10px] font-bold tracking-[.12em] text-white/65">Engineered by <span className="font-black text-blue-500">V</span><span className="font-semibold text-blue-400">ision</span></p>
             <div className="flex items-center gap-2" aria-label="Choose featured slide">
               {slides.map((item, index) => (
                 <button
@@ -127,9 +120,6 @@ export default function Home() {
         </section>
       </section>
 
-      <footer className="relative border-t border-white/10 px-5 py-4 text-center text-[11px] text-white/35 sm:py-5">
-        STREAM UG — Engineered by <span className="inline-block align-baseline text-2xl font-black leading-none text-blue-500">V</span><span className="font-semibold text-sky-300">ision</span>.<div className="mt-1"><a href="https://visiongrow.vercel.app" target="_blank" rel="noreferrer" className="text-sky-400 transition hover:text-sky-200 hover:underline">visiongrow.vercel.app</a></div>
-      </footer>
     </main>
   );
 }
