@@ -28,39 +28,38 @@ export default function Signup() {
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
-    if (password !== confirm) { setError("Passwords do not match."); return; }
-    if (password.length < 6) { setError("Use at least 6 characters for your password."); return; }
+    if (password !== confirm) {
+      setError("Passwords do not match.");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Use at least 6 characters for your password.");
+      return;
+    }
     setBusy(true);
     try {
-      const response = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), email: email.trim(), password }),
-        cache: "no-store",
+      const supabase = createClient();
+      const { data, error: authError } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password,
+        options: {
+          data: { name: name.trim() },
+          emailRedirectTo: `${window.location.origin}/login?verified=1`,
+        },
       });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        setError(result.error || "We couldn't create your account. Please try again.");
+      if (authError) {
+        setError(authError.message);
         setBusy(false);
         return;
       }
-      if (result.access_token && result.refresh_token) {
-        const { error: sessionError } = await createClient().auth.setSession({
-          access_token: result.access_token,
-          refresh_token: result.refresh_token,
-        });
-        if (sessionError) {
-          setError("Your account was created, but we couldn't save your sign-in. Please log in.");
-          setBusy(false);
-          return;
-        }
+      if (data.session) {
         window.location.assign("/browse");
         return;
       }
       setError("Account created. Check your email to verify your address, then log in.");
       setBusy(false);
     } catch (err) {
-      setError(err instanceof TypeError ? "STREAM UG couldn't connect securely. Check your internet connection and try again." : err instanceof Error ? err.message : "We couldn't create your account. Please try again.");
+      setError(err instanceof Error ? err.message : "We couldn't create your account. Please try again.");
       setBusy(false);
     }
   }
