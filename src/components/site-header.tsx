@@ -22,9 +22,20 @@ export default function SiteHeader() {
     void (async () => {
       const { data: { session } } = await client.auth.getSession();
       if (!session) return;
-      const { data } = await client.from("view_history").select("progress_seconds,duration_seconds").eq("user_id", session.user.id);
+      const seenKey = "stream-ug-continue-seen:" + session.user.id;
+      if (pathname === "/history") {
+        window.localStorage.setItem(seenKey, new Date().toISOString());
+        if (live) setContinueCount(0);
+        return;
+      }
+      const lastSeenAt = window.localStorage.getItem(seenKey);
+      const { data } = await client.from("view_history").select("progress_seconds,duration_seconds,updated_at").eq("user_id", session.user.id);
       if (!live) return;
-      setContinueCount((data || []).filter((row) => row.duration_seconds > 0 && row.progress_seconds < row.duration_seconds * 0.95).length);
+      setContinueCount((data || []).filter((row) =>
+        row.duration_seconds > 0 &&
+        row.progress_seconds < row.duration_seconds * 0.95 &&
+        (!lastSeenAt || new Date(row.updated_at).getTime() > new Date(lastSeenAt).getTime())
+      ).length);
     })();
     return () => { live = false; };
   }, [pathname]);
