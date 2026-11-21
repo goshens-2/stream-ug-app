@@ -56,8 +56,15 @@ export default function Signup() {
           <h1 className="text-4xl font-black leading-[1.04] tracking-[-.05em] sm:text-5xl xl:text-6xl">Stories worth staying up for.</h1>
           <p className="mt-3 max-w-md text-sm leading-6 text-white/75 sm:mt-4 sm:text-base sm:leading-7">Join STREAM UG and discover movies, series and unforgettable moments.</p>
           <div className="mt-6 border-l-[3px] border-[#e73545] pl-4 sm:mt-8 sm:pl-5">
-            <p className="text-[10px] font-bold uppercase tracking-[.3em] text-white/65 sm:text-xs">Proudly crafted</p>
-            <p className="mt-1.5 text-3xl font-black tracking-[-.04em] text-white sm:text-4xl xl:text-5xl">ENGINEERED BY <span className="text-blue-500">VISION</span></p>
+            <p className="text-3xl font-black tracking-[-.04em] text-white sm:text-4xl xl:text-5xl">ENGINEERED BY <span className="text-blue-500">VISION</span></p>
+            <a href="https://visiongrow.vercel.app" target="_blank" rel="noopener noreferrer" className="group mt-4 inline-flex items-center gap-3 rounded-full border border-blue-400/30 bg-blue-500/10 px-4 py-2.5 text-left shadow-lg shadow-blue-950/20 backdrop-blur-sm transition duration-300 hover:-translate-y-0.5 hover:border-blue-300/70 hover:bg-blue-500/20">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/20 text-sm font-black text-blue-300">V</span>
+              <span className="flex flex-col">
+                <span className="text-[9px] font-bold uppercase tracking-[.22em] text-white/55">Explore our creative studio</span>
+                <span className="text-xs font-semibold tracking-wide text-blue-200 group-hover:text-white sm:text-sm">visiongrow.vercel.app</span>
+              </span>
+              <span aria-hidden="true" className="ml-1 text-blue-300 transition-transform group-hover:translate-x-1 group-hover:-translate-y-0.5">↗</span>
+            </a>
           </div>
         </div>
         <p className="absolute bottom-5 left-7 z-10 text-[9px] tracking-[.16em] text-white/55 sm:left-12 sm:bottom-7 sm:text-xs">STREAM UG · ENTERTAINMENT WITHOUT LIMITS</p>
