@@ -43,8 +43,12 @@ export default function TrailersPage() {
       if (!active) return;
       const categoryList = (categoryRows || []) as Category[];
       setCategories(categoryList);
+      const categoryIdsByName = new Map(categoryList.map((category) => [category.name.toLowerCase(), category.id]));
       const databaseTrailers = error ? [] : ((data || []) as Trailer[]).map((item) => ({ ...item, category: categoryList.find((c) => c.id === item.category_id)?.name || "Uncategorised" }));
-      setTrailers([...databaseTrailers, ...sampleTrailers]);
+      const fallbackTrailers = sampleTrailers
+        .filter((sample) => !databaseTrailers.some((item) => item.title.toLowerCase() === sample.title.toLowerCase()))
+        .map((sample) => ({ ...sample, category_id: categoryIdsByName.get((sample.category || "").toLowerCase()) || null }));
+      setTrailers([...databaseTrailers, ...fallbackTrailers]);
       setLoading(false);
     })();
     return () => { active = false; };
@@ -54,7 +58,7 @@ export default function TrailersPage() {
     const term = query.trim().toLowerCase();
     return trailers.filter((item) =>
       (categoryId === "all" || item.category_id === categoryId) &&
-      (!term || item.title.toLowerCase().includes(term) || (item.description || "").toLowerCase().includes(term))
+      (!term || item.title.toLowerCase().includes(term) || (item.description || "").toLowerCase().includes(term) || (item.category || "").toLowerCase().includes(term) || String(item.release_year || "").includes(term))
     );
   }, [trailers, query, categoryId]);
 
@@ -81,13 +85,14 @@ export default function TrailersPage() {
       if (!entry.isIntersecting || entry.intersectionRatio < 0.25) {
         if (videoRef.current) videoRef.current.muted = true;
         setMuted(true);
+        if (activeTrailer) setMutedByTrailer((previous) => ({ ...previous, [activeTrailer.id]: true }));
       }
     }, { threshold: [0, 0.25, 0.5] });
     observer.observe(node);
     return () => observer.disconnect();
-  }, [activeTrailer?.id]);
+  }, [activeTrailer?.id, activeTrailer]);
 
-  return <main className="min-h-screen bg-[#08090c] text-white">
+  return <main> className="min-h-screen bg-[#08090c] text-white">
     <SiteHeader />
     <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
       <div className="mb-6">
@@ -122,7 +127,7 @@ export default function TrailersPage() {
           </button>
           <button type="button" onClick={nextTrailer} className="absolute left-4 top-4 z-10 rounded-full border border-white/20 bg-black/70 px-4 py-2.5 text-xs font-bold text-white shadow-lg backdrop-blur transition hover:bg-black/90">Next trailer →</button>
         </section>
-        <div className="mt-8 flex items-center justify-between gap-3"><h2 className="text-lg font-bold">More trailers</h2><p className="text-xs text-white/40">{visibleTrailers.length} results</p></div>
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-bold">More trailers</h2><p className="mt-1 text-xs text-white/40">Category: {categories.find((category) => category.id === categoryId)?.name || "All categories"}</p></div><p className="text-xs text-white/40">{visibleTrailers.length} results</p></div>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {visibleTrailers.map((item, index) => <button key={item.id} type="button" onClick={() => { setActiveIndex(index); }} className={"overflow-hidden rounded-2xl border text-left transition " + (index === activeIndex ? "border-[#f04455] bg-[#21151a]" : "border-white/10 bg-[#12151d] hover:border-white/30")}>
             <div className="relative aspect-video bg-black"><img src={item.poster_url || "/placeholder-movie.png"} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover opacity-75"/><span className="absolute inset-0 grid place-items-center text-2xl text-white drop-shadow">▶</span></div>
