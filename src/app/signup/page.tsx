@@ -21,39 +21,20 @@ export default function Signup() {
   const [activeImage, setActiveImage] = useState(0);
 
   useEffect(() => {
-    const interval = window.setInterval(() => {
-      setActiveImage((current) => (current + 1) % demoImages.length);
-    }, 5000);
+    const interval = window.setInterval(() => setActiveImage((current) => (current + 1) % demoImages.length), 5000);
     return () => window.clearInterval(interval);
   }, []);
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
-    if (password !== confirm) {
-      setError("Passwords do not match.");
-      return;
-    }
-    if (password.length < 6) {
-      setError("Use at least 6 characters for your password.");
-      return;
-    }
+    if (password !== confirm) { setError("Passwords do not match."); return; }
+    if (password.length < 6) { setError("Use at least 6 characters for your password."); return; }
     setBusy(true);
     try {
-      const { data, error: authError } = await createClient().auth.signUp({
-        email: email.trim(),
-        password,
-        options: { data: { name: name.trim() } },
-      });
-      if (authError) {
-        setError(authError.message);
-        setBusy(false);
-        return;
-      }
-      if (data.session) {
-        window.location.assign("/browse");
-        return;
-      }
+      const { data, error: authError } = await createClient().auth.signUp({ email: email.trim(), password, options: { data: { name: name.trim() } } });
+      if (authError) { setError(authError.message); setBusy(false); return; }
+      if (data.session) { window.location.assign("/browse"); return; }
       setError("Account created. Check your email to complete sign-in.");
       setBusy(false);
     } catch (err) {
@@ -63,70 +44,40 @@ export default function Signup() {
   }
 
   return (
-    <main className="grid min-h-screen bg-[#08090c] lg:grid-cols-[1.05fr_.95fr]">
-      <section className="relative hidden min-h-screen flex-col justify-between overflow-hidden border-r border-white/10 p-12 lg:flex">
+    <main className="grid min-h-screen bg-[#08090c] lg:h-screen lg:min-h-0 lg:grid-cols-[1.05fr_.95fr]">
+      <section className="relative flex min-h-[390px] flex-col justify-center overflow-hidden border-b border-white/10 px-7 py-9 sm:px-12 lg:h-screen lg:border-b-0 lg:border-r lg:px-14 lg:py-8">
         {demoImages.map((src, index) => (
-          <div
-            key={src}
-            aria-hidden="true"
-            className="absolute inset-0 bg-cover bg-center transition-opacity duration-[1800ms] ease-in-out"
-            style={{ backgroundImage: `url("${src}")`, opacity: activeImage === index ? 1 : 0 }}
-          />
+          <div key={src} aria-hidden="true" className="absolute inset-0 bg-cover bg-center transition-opacity duration-[1800ms] ease-in-out" style={{ backgroundImage: `url("${src}")`, opacity: activeImage === index ? 1 : 0 }} />
         ))}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#08090c]/90 via-[#08090c]/55 to-[#08090c]/35" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#08090c] via-transparent to-[#08090c]/35" />
-        <Link href="/" className="relative z-10 text-xl font-black tracking-[.2em] text-white">
-          STREAM<span className="text-[#e73545]"> UG</span>
-        </Link>
-        <div className="relative z-10 max-w-xl py-16">
-          <p className="text-xs font-bold tracking-[.3em] text-[#ff8791]">YOUR NEXT MOVIE NIGHT STARTS HERE</p>
-          <h1 className="mt-5 text-6xl font-black leading-[1.05] tracking-[-.05em] xl:text-7xl">
-            Stories worth staying up for.
-          </h1>
-          <p className="mt-6 max-w-md text-base leading-8 text-white/70">
-            Join STREAM UG and discover movies, series and unforgettable moments.
-          </p>
-          <div className="mt-12 border-l-4 border-[#e73545] pl-5">
-            <p className="text-xs font-bold uppercase tracking-[.35em] text-white/55">Proudly crafted</p>
-            <p className="mt-2 text-4xl font-black tracking-[-.04em] text-white xl:text-5xl">
-              ENGINEERED BY <span className="text-[#f04455]">VISION</span>
-            </p>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#08090c]/90 via-[#08090c]/65 to-[#08090c]/45" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#08090c]/85 via-transparent to-[#08090c]/55" />
+        <Link href="/" className="absolute left-7 top-7 z-10 text-lg font-black tracking-[.2em] text-white sm:left-12 sm:top-8">STREAM<span className="text-[#e73545]"> UG</span></Link>
+        <div className="relative z-10 mx-auto w-full max-w-xl py-5 lg:py-0">
+          <h1 className="text-4xl font-black leading-[1.04] tracking-[-.05em] sm:text-5xl xl:text-6xl">Stories worth staying up for.</h1>
+          <p className="mt-3 max-w-md text-sm leading-6 text-white/75 sm:mt-4 sm:text-base sm:leading-7">Join STREAM UG and discover movies, series and unforgettable moments.</p>
+          <div className="mt-6 border-l-[3px] border-[#e73545] pl-4 sm:mt-8 sm:pl-5">
+            <p className="text-[10px] font-bold uppercase tracking-[.3em] text-white/65 sm:text-xs">Proudly crafted</p>
+            <p className="mt-1.5 text-3xl font-black tracking-[-.04em] text-white sm:text-4xl xl:text-5xl">ENGINEERED BY <span className="text-blue-500">VISION</span></p>
           </div>
         </div>
-        <p className="relative z-10 text-xs tracking-[.18em] text-white/45">STREAM UG · ENTERTAINMENT WITHOUT LIMITS</p>
+        <p className="absolute bottom-5 left-7 z-10 text-[9px] tracking-[.16em] text-white/55 sm:left-12 sm:bottom-7 sm:text-xs">STREAM UG · ENTERTAINMENT WITHOUT LIMITS</p>
       </section>
 
-      <section className="flex items-center justify-center px-6 py-12 sm:py-16">
+      <section className="flex items-center justify-center px-6 py-7 sm:py-9 lg:h-screen lg:overflow-y-auto lg:px-10 lg:py-5">
         <div className="w-full max-w-md">
           <Link href="/" className="text-sm text-white/45 transition hover:text-white">← Back to home</Link>
-          <p className="mt-12 text-xs font-bold tracking-[.25em] text-[#f16b78]">JOIN THE STREAM</p>
-          <h2 className="mt-3 text-4xl font-black">Create your account</h2>
-          <p className="mt-3 text-sm text-white/45">One account. A world of stories.</p>
-          <form onSubmit={submit} className="mt-8 space-y-4">
-            <label className="block text-sm text-white/70">
-              Username
-              <input required type="text" autoComplete="username" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" className="mt-2 w-full rounded-xl border border-white/10 bg-[#111319] px-4 py-4 text-white outline-none transition focus:border-[#e73545]" />
-            </label>
-            <label className="block text-sm text-white/70">
-              Email
-              <input required type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="mt-2 w-full rounded-xl border border-white/10 bg-[#111319] px-4 py-4 text-white outline-none transition focus:border-[#e73545]" />
-            </label>
-            <label className="block text-sm text-white/70">
-              Password
-              <input required type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Create a password" className="mt-2 w-full rounded-xl border border-white/10 bg-[#111319] px-4 py-4 text-white outline-none transition focus:border-[#e73545]" />
-            </label>
-            <label className="block text-sm text-white/70">
-              Confirm password
-              <input required type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Enter your password again" className="mt-2 w-full rounded-xl border border-white/10 bg-[#111319] px-4 py-4 text-white outline-none transition focus:border-[#e73545]" />
-            </label>
+          <p className="mt-5 text-xs font-bold tracking-[.25em] text-[#f16b78] sm:mt-6">JOIN THE STREAM</p>
+          <h2 className="mt-2 text-3xl font-black sm:text-4xl">Create your account</h2>
+          <p className="mt-2 text-sm text-white/45">One account. A world of stories.</p>
+          <form onSubmit={submit} className="mt-5 space-y-3">
+            <label className="block text-sm text-white/70">Username<input required type="text" autoComplete="username" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" className="mt-1.5 w-full rounded-xl border border-white/10 bg-[#111319] px-4 py-3 text-white outline-none transition focus:border-[#e73545]" /></label>
+            <label className="block text-sm text-white/70">Email<input required type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="mt-1.5 w-full rounded-xl border border-white/10 bg-[#111319] px-4 py-3 text-white outline-none transition focus:border-[#e73545]" /></label>
+            <label className="block text-sm text-white/70">Password<input required type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Create a password" className="mt-1.5 w-full rounded-xl border border-white/10 bg-[#111319] px-4 py-3 text-white outline-none transition focus:border-[#e73545]" /></label>
+            <label className="block text-sm text-white/70">Confirm password<input required type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Enter your password again" className="mt-1.5 w-full rounded-xl border border-white/10 bg-[#111319] px-4 py-3 text-white outline-none transition focus:border-[#e73545]" /></label>
             {error && <p role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
-            <button disabled={busy} className="w-full rounded-xl bg-[#e73545] py-4 text-sm font-bold transition hover:bg-[#f04454] disabled:opacity-50">
-              {busy ? "Creating account…" : "Create account"}
-            </button>
+            <button disabled={busy} className="w-full rounded-xl bg-[#e73545] py-3.5 text-sm font-bold transition hover:bg-[#f04454] disabled:opacity-50">{busy ? "Creating account…" : "Create account"}</button>
           </form>
-          <p className="mt-7 text-center text-sm text-white/45">
-            Already have an account? <Link href="/login" className="font-semibold text-white hover:text-[#ff8791]">Log in</Link>
-          </p>
+          <p className="mt-4 text-center text-sm text-white/45">Already have an account? <Link href="/login" className="font-semibold text-white hover:text-[#ff8791]">Log in</Link></p>
         </div>
       </section>
     </main>
