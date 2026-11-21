@@ -92,7 +92,7 @@ export default function TrailersPage() {
     return () => observer.disconnect();
   }, [activeTrailer?.id, activeTrailer]);
 
-  return <main> className="min-h-screen bg-[#08090c] text-white">
+  return <main className="min-h-screen bg-[#08090c] text-white">
     <SiteHeader />
     <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
       <div className="mb-6">
