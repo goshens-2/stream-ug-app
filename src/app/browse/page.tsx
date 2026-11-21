@@ -147,6 +147,19 @@ export default function Browse() {
     return () => window.clearTimeout(timer);
   }, [q, items]);
 
+  useEffect(() => {
+    const node = trailerHeroRef.current;
+    if (!node || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting || entry.intersectionRatio < 0.25) {
+        if (trailerVideoRef.current) trailerVideoRef.current.muted = true;
+        setTrailerMuted(true);
+      }
+    }, { threshold: [0, 0.25, 0.5] });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [activeTrailer?.id]);
+
   async function logout() {
     await createClient().auth.signOut();
     window.location.assign("/");
@@ -269,17 +282,6 @@ export default function Browse() {
       </section>
     </main>
   );
-}  useEffect(() => {
-    const node = trailerHeroRef.current;
-    if (!node || typeof IntersectionObserver === "undefined") return;
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting || entry.intersectionRatio < 0.25) {
-        if (trailerVideoRef.current) trailerVideoRef.current.muted = true;
-        setTrailerMuted(true);
-      }
-    }, { threshold: [0, 0.25, 0.5] });
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [activeTrailer?.id]);
+}
 
 
