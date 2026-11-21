@@ -32,13 +32,35 @@ export default function Signup() {
     if (password.length < 6) { setError("Use at least 6 characters for your password."); return; }
     setBusy(true);
     try {
-      const { data, error: authError } = await createClient().auth.signUp({ email: email.trim(), password, options: { data: { name: name.trim() } } });
-      if (authError) { setError(authError.message); setBusy(false); return; }
-      if (data.session) { window.location.assign("/browse"); return; }
-      setError("Account created. Check your email to complete sign-in.");
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), email: email.trim(), password }),
+        cache: "no-store",
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setError(result.error || "We couldn't create your account. Please try again.");
+        setBusy(false);
+        return;
+      }
+      if (result.access_token && result.refresh_token) {
+        const { error: sessionError } = await createClient().auth.setSession({
+          access_token: result.access_token,
+          refresh_token: result.refresh_token,
+        });
+        if (sessionError) {
+          setError("Your account was created, but we couldn't save your sign-in. Please log in.");
+          setBusy(false);
+          return;
+        }
+        window.location.assign("/browse");
+        return;
+      }
+      setError("Account created. Check your email to verify your address, then log in.");
       setBusy(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to reach STREAM UG authentication. Check your internet connection and try again.");
+      setError(err instanceof TypeError ? "STREAM UG couldn't connect securely. Check your internet connection and try again." : err instanceof Error ? err.message : "We couldn't create your account. Please try again.");
       setBusy(false);
     }
   }
