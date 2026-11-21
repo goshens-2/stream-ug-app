@@ -60,18 +60,20 @@ export default function Browse() {
   const [trailerNeedsTap, setTrailerNeedsTap] = useState(false);
   const [trailerFailed, setTrailerFailed] = useState(false);
   const trailerVideoRef = useRef<HTMLVideoElement | null>(null);
+  const userId = useRef<string | null>(null);
 
   useEffect(() => {
     const s = createClient();
     let live = true;
     void (async () => {
-      const { data: { user } } = await s.auth.getUser();
-      if (!user) { window.location.replace("/login"); return; }
+      const { data: { session } } = await s.auth.getSession();
+      if (!session) { window.location.replace("/login"); return; }
+      userId.current = session.user.id;
       const [{ data: p }, { data: c }, { data: k }, { count }] = await Promise.all([
-        s.from("profiles").select("name,is_admin").eq("id", user.id).maybeSingle(),
+        s.from("profiles").select("name,is_admin").eq("id", session.user.id).maybeSingle(),
         s.from("content").select("id,title,description,poster_url,trailer_url,video_url,release_year,duration_minutes,category_id").order("created_at", { ascending: false }),
         s.from("categories").select("id,name,slug").order("name"),
-        s.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("read", false),
+        s.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", session.user.id).eq("read", false),
       ]);
       if (!live) return;
       if (p?.is_admin) { window.location.replace("/admin"); return; }
@@ -134,9 +136,8 @@ export default function Browse() {
     const timer = window.setTimeout(() => {
       void (async () => {
         const s = createClient();
-        const { data: { user } } = await s.auth.getUser();
         const match = items.find((x) => x.title.toLowerCase().includes(q.trim().toLowerCase()));
-        await s.from("search_logs").insert({ user_id: user?.id || null, query: q.trim(), matched_content_id: match?.id || null });
+        await s.from("search_logs").insert({ user_id: userId.current, query: q.trim(), matched_content_id: match?.id || null });
       })();
     }, 650);
     return () => window.clearTimeout(timer);
@@ -174,7 +175,7 @@ export default function Browse() {
                   <p className="px-1 pb-2 pt-4 text-[10px] font-bold uppercase tracking-[.2em] text-white/45">{q.trim() ? "Search suggestions" : "Popular titles"}</p>
                   {suggestions.length ? suggestions.map((movie) => (
                     <button key={movie.id} type="button" onClick={() => { setQ(movie.title); setSearchOpen(false); window.setTimeout(() => document.getElementById("library-results")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80); }} className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-white/10">
-                      <span className="h-11 w-8 shrink-0 overflow-hidden rounded-md bg-white/10">{movie.poster_url && <img src={movie.poster_url} alt="" className="h-full w-full object-cover" />}</span>
+                      <span className="h-11 w-8 shrink-0 overflow-hidden rounded-md bg-white/10">{movie.poster_url && <img src={movie.poster_url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />}</span>
                       <span className="min-w-0 flex-1 truncate text-sm font-semibold text-white">{movie.title}</span>
                       <span className="text-xs text-white/35">View</span>
                     </button>
@@ -207,7 +208,7 @@ export default function Browse() {
 
       <section className="mx-auto max-w-7xl px-5 pt-6">
         <div className="relative h-[clamp(260px,42vw,420px)] overflow-hidden rounded-[1.6rem] border border-white/10 bg-[#11151e] shadow-[0_22px_70px_rgba(0,0,0,.42)]">
-          {activeTrailer?.trailer_url && <video ref={trailerVideoRef} key={activeTrailer.id} src={activeTrailer.trailer_url} poster={activeTrailer.poster_url || undefined} autoPlay muted={trailerMuted} playsInline loop preload="auto" onCanPlay={() => { const playPromise = trailerVideoRef.current?.play(); playPromise?.catch(() => setTrailerNeedsTap(true)); }} onPlaying={() => { setTrailerPlaying(true); setTrailerNeedsTap(false); setTrailerFailed(false); }} onError={() => { setTrailerPlaying(false); setTrailerFailed(true); }} className="absolute inset-0 h-full w-full object-cover" /> }
+          {activeTrailer?.trailer_url && <video ref={trailerVideoRef} key={activeTrailer.id} src={activeTrailer.trailer_url} poster={activeTrailer.poster_url || undefined} autoPlay muted={trailerMuted} playsInline loop preload="metadata" onCanPlay={() => { const playPromise = trailerVideoRef.current?.play(); playPromise?.catch(() => setTrailerNeedsTap(true)); }} onPlaying={() => { setTrailerPlaying(true); setTrailerNeedsTap(false); setTrailerFailed(false); }} onError={() => { setTrailerPlaying(false); setTrailerFailed(true); }} className="absolute inset-0 h-full w-full object-cover" /> }
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/15" />
           <div className="absolute right-4 top-4 z-10 rounded-full border border-white/25 bg-black/60 px-4 py-2 text-[10px] font-black uppercase tracking-[.18em] text-white backdrop-blur-md sm:right-6 sm:top-6">{activeTrailer?.category_name || "Featured preview"}</div>
           <button type="button" aria-label={trailerMuted ? "Turn preview sound on" : "Mute preview"} title={trailerMuted ? "Turn sound on" : "Mute sound"} onClick={() => { setTrailerMuted((value) => { const next = !value; if (trailerVideoRef.current) { trailerVideoRef.current.muted = next; if (!next) void trailerVideoRef.current.play().catch(() => setTrailerNeedsTap(true)); } return next; }); }} className="absolute left-4 top-4 z-10 grid h-11 w-11 place-items-center rounded-full border border-white/25 bg-black/60 text-white shadow-lg backdrop-blur-md transition hover:bg-black/80 sm:left-6 sm:top-6"><svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{trailerMuted ? <><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="m16 9 5 6m0-6-5 6"/></> : <><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7m2.5-9.5a8.5 8.5 0 0 1 0 12"/></>}</svg></button>
