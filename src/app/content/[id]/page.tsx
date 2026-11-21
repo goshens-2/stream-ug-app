@@ -27,6 +27,11 @@ export default function ContentDetail() {
   const [trailer, setTrailer] = useState(false);
   const [category, setCategory] = useState("");
   const [type, setType] = useState("");
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [scheduleChoice, setScheduleChoice] = useState<"today" | "tomorrow" | "other">("today");
+  const [scheduleDate, setScheduleDate] = useState(() => new Date().toLocaleDateString("en-CA"));
+  const [scheduleTime, setScheduleTime] = useState("20:00");
+  const [savingFavorite, setSavingFavorite] = useState(false);
   const [client] = useState(() => createClient());
   const userId = useRef<string | null>(null);
   const lastProgressSave = useRef(0);
@@ -74,13 +79,46 @@ export default function ContentDetail() {
   const toggleFavorite = useCallback(async () => {
     const currentUserId = userId.current;
     if (!currentUserId) return;
-    const previous = fav;
-    setFav(!previous);
-    const result = previous
-      ? await client.from("favorites").delete().eq("user_id", currentUserId).eq("content_id", id)
-      : await client.from("favorites").insert({ user_id: currentUserId, content_id: id });
-    if (result.error) setFav(previous);
+    if (fav) {
+      setFav(false);
+      const { error: deleteError } = await client.from("favorites").delete().eq("user_id", currentUserId).eq("content_id", id);
+      if (deleteError) setFav(true);
+      return;
+    }
+    setScheduleOpen(true);
   }, [client, fav, id]);
+
+  const saveFavorite = useCallback(async (plannedAt: string | null) => {
+    const currentUserId = userId.current;
+    if (!currentUserId || savingFavorite) return;
+    setSavingFavorite(true);
+    const { error: insertError } = await client.from("favorites").insert({
+      user_id: currentUserId,
+      content_id: id,
+      planned_watch_at: plannedAt,
+    });
+    setSavingFavorite(false);
+    if (!insertError) {
+      setFav(true);
+      setScheduleOpen(false);
+    } else {
+      setError("Could not add this title to your watchlist. Please try again.");
+    }
+  }, [client, id, savingFavorite]);
+
+  const saveScheduledFavorite = useCallback(() => {
+    const today = new Date();
+    const target = new Date(today);
+    if (scheduleChoice === "tomorrow") target.setDate(target.getDate() + 1);
+    if (scheduleChoice === "other") {
+      if (!scheduleDate) return;
+      const [year, month, day] = scheduleDate.split("-").map(Number);
+      target.setFullYear(year, month - 1, day);
+    }
+    const [hours, minutes] = scheduleTime.split(":").map(Number);
+    target.setHours(hours || 0, minutes || 0, 0, 0);
+    void saveFavorite(target.toISOString());
+  }, [scheduleChoice, scheduleDate, scheduleTime, saveFavorite]);
 
   const rate = useCallback(async (nextScore: number) => {
     const currentUserId = userId.current;
@@ -115,6 +153,13 @@ export default function ContentDetail() {
     progressSaving.current = false;
   }, [client, id]);
 
+  const clearCompletedProgress = useCallback(async () => {
+    const currentUserId = userId.current;
+    if (!currentUserId) return;
+    await client.from("view_history").delete().eq("user_id", currentUserId).eq("content_id", id);
+    lastProgressSave.current = 0;
+  }, [client, id]);
+
   if (loading) return <main className="min-h-screen bg-[#090a0e] p-10 text-white"><SiteHeader />Loading title…</main>;
   if (!item) return <main className="min-h-screen bg-[#090a0e] p-10 text-white"><p>{error || "Title not found."}</p><Link href="/browse">Back to browse</Link></main>;
 
@@ -133,7 +178,7 @@ export default function ContentDetail() {
               <video key={source} src={source} poster={item.poster_url || undefined} controls className="h-full w-full"
                 onTimeUpdate={(event) => void saveProgress(event)}
                 onPause={(event) => void saveProgress(event, true)}
-                onEnded={(event) => void saveProgress(event, true)} />
+                onEnded={() => void clearCompletedProgress()} />
             ) : item.embed_url ? (
               <iframe src={item.embed_url} title={item.title} allowFullScreen className="h-full w-full" />
             ) : (
@@ -147,7 +192,7 @@ export default function ContentDetail() {
                 <h1 className="mt-3 text-3xl font-black sm:text-5xl">{item.title}</h1>
                 <p className="mt-3 text-sm text-white/45">{[item.release_year, item.duration_minutes ? item.duration_minutes + " min" : null, item.language, item.age_rating].filter(Boolean).join(" · ")}</p>
               </div>
-              <button onClick={() => void toggleFavorite()} aria-pressed={fav} className="rounded-xl border border-white/15 px-4 py-3 text-sm font-bold">{fav ? "★ In watchlist" : "☆ Add to watchlist"}</button>
+              <button onClick={() => void toggleFavorite()} aria-pressed={fav} className="rounded-xl border border-white/15 px-4 py-3 text-sm font-bold">{fav ? "★ In watchlist · Remove" : "＋ Add to watchlist"}</button>
             </div>
             <div className="mt-6 flex flex-wrap gap-3">
               {item.trailer_url && <button onClick={() => setTrailer(!trailer)} className="rounded-lg bg-white/10 px-4 py-2 text-sm">{trailer ? "Watch full title" : "Watch trailer"}</button>}
@@ -171,6 +216,23 @@ export default function ContentDetail() {
           </div>
         </div>
       </div>
+      {scheduleOpen && <div className="fixed inset-0 z-[80] grid place-items-center bg-black/75 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="watchlist-schedule-title">
+        <div className="w-full max-w-md rounded-2xl border border-white/15 bg-[#151821] p-6 shadow-2xl">
+          <p className="text-xs font-bold uppercase tracking-[.2em] text-[#ff8791]">MY WATCHLIST</p>
+          <h2 id="watchlist-schedule-title" className="mt-2 text-2xl font-black">When would you like to watch?</h2>
+          <p className="mt-2 text-sm text-white/55">Choose a reminder time, or skip this step and save the title now.</p>
+          <div className="mt-5 grid grid-cols-3 gap-2">
+            {(["today", "tomorrow", "other"] as const).map((choice) => <button key={choice} type="button" onClick={() => setScheduleChoice(choice)} className={"rounded-xl border px-3 py-3 text-sm font-semibold capitalize " + (scheduleChoice === choice ? "border-[#f04455] bg-[#f04455]/15 text-white" : "border-white/15 text-white/65")}>{choice === "other" ? "Another day" : choice}</button>)}
+          </div>
+          {scheduleChoice === "other" && <label className="mt-4 block text-xs font-semibold text-white/65">Choose a date<input type="date" min={new Date().toLocaleDateString("en-CA")} value={scheduleDate} onChange={(event) => setScheduleDate(event.target.value)} className="mt-2 w-full rounded-xl border border-white/15 bg-black/30 px-3 py-3 text-sm text-white [color-scheme:dark]"/></label>}
+          <label className="mt-4 block text-xs font-semibold text-white/65">Choose a time<input type="time" value={scheduleTime} onChange={(event) => setScheduleTime(event.target.value)} className="mt-2 w-full rounded-xl border border-white/15 bg-black/30 px-3 py-3 text-sm text-white [color-scheme:dark]"/></label>
+          <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+            <button type="button" disabled={savingFavorite} onClick={() => void saveFavorite(null)} className="flex-1 rounded-xl border border-white/15 px-4 py-3 text-sm font-semibold text-white/75 disabled:opacity-50">Skip and save now</button>
+            <button type="button" disabled={savingFavorite || (scheduleChoice === "other" && !scheduleDate)} onClick={saveScheduledFavorite} className="flex-1 rounded-xl bg-[#e73545] px-4 py-3 text-sm font-bold text-white disabled:opacity-50">{savingFavorite ? "Saving…" : "Save watch time"}</button>
+          </div>
+          <button type="button" onClick={() => setScheduleOpen(false)} className="mt-4 w-full text-xs text-white/40 hover:text-white">Cancel</button>
+        </div>
+      </div>}
     </main>
   );
 }
