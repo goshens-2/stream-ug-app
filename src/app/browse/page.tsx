@@ -48,6 +48,7 @@ export default function Browse() {
   const [cat, setCat] = useState("all");
   const [loading, setLoading] = useState(true);
   const [unread, setUnread] = useState(0);
+  const [continueCount, setContinueCount] = useState(0);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [categoriesOpenAt, setCategoriesOpenAt] = useState(0);
@@ -60,6 +61,7 @@ export default function Browse() {
   const [trailerNeedsTap, setTrailerNeedsTap] = useState(false);
   const [trailerFailed, setTrailerFailed] = useState(false);
   const trailerVideoRef = useRef<HTMLVideoElement | null>(null);
+  const trailerHeroRef = useRef<HTMLDivElement | null>(null);
   const userId = useRef<string | null>(null);
 
   useEffect(() => {
@@ -69,11 +71,12 @@ export default function Browse() {
       const { data: { session } } = await s.auth.getSession();
       if (!session) { window.location.replace("/login"); return; }
       userId.current = session.user.id;
-      const [{ data: p }, { data: c }, { data: k }, { count }] = await Promise.all([
+      const [{ data: p }, { data: c }, { data: k }, { count }, { data: historyRows }] = await Promise.all([
         s.from("profiles").select("name,is_admin").eq("id", session.user.id).maybeSingle(),
         s.from("content").select("id,title,description,poster_url,trailer_url,video_url,release_year,duration_minutes,category_id").order("created_at", { ascending: false }),
         s.from("categories").select("id,name,slug").order("name"),
         s.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", session.user.id).eq("read", false),
+        s.from("view_history").select("progress_seconds,duration_seconds").eq("user_id", session.user.id),
       ]);
       if (!live) return;
       if (p?.is_admin) { window.location.replace("/admin"); return; }
@@ -81,6 +84,7 @@ export default function Browse() {
       setItems((c || []) as Movie[]);
       setCats((k || []) as Category[]);
       setUnread(count || 0);
+      setContinueCount((historyRows || []).filter((row) => row.duration_seconds > 0 && row.progress_seconds < row.duration_seconds * 0.95).length);
       setLoading(false);
     })();
     return () => { live = false; };
@@ -156,8 +160,9 @@ export default function Browse() {
           <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 text-sm font-semibold text-white/90 lg:flex">
             <Link href="/browse" className="transition hover:text-white">Home</Link>
             <Link href="/trailers" className="transition hover:text-white">Trailers</Link>
+            <Link href="/watch-with-me" className="transition hover:text-white">Watch With Me</Link>
             <Link href="/favorites" className="transition hover:text-white">Watchlist</Link>
-            <Link href="/history" className="transition hover:text-white">Continue watching</Link>
+            <Link href="/history" className="transition hover:text-white">Continue watching{continueCount > 0 ? " (" + continueCount + ")" : ""}</Link>
           </nav>
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
             {rotatingSuggestions.length > 0 && <button type="button" onClick={() => { const title = rotatingSuggestions[suggestionIndex % rotatingSuggestions.length].title; setQ(title); setSearchOpen(true); setProfileOpen(false); }} className="hidden max-w-[190px] items-center gap-2 overflow-hidden rounded-full border border-white/10 bg-white/[.045] px-3 py-2 text-left transition hover:border-[#f04455]/60 md:flex">
@@ -200,14 +205,15 @@ export default function Browse() {
         </div>
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-5 pb-3 lg:hidden">
           <Link href="/trailers" className="text-xs font-semibold text-white/75">Trailers</Link>
+          <Link href="/watch-with-me" className="text-xs font-semibold text-white/75">Watch With Me</Link>
           <Link href="/favorites" className="text-xs font-semibold text-white/75">Watchlist</Link>
-          <Link href="/history" className="text-xs font-semibold text-white/75">Continue watching</Link>
+          <Link href="/history" className="text-xs font-semibold text-white/75">Continue watching{continueCount > 0 ? " (" + continueCount + ")" : ""}</Link>
           <span className="ml-auto max-w-[42%] truncate text-xs text-white/60">Hi, {name}</span>
         </div>
       </header>
 
       <section className="mx-auto max-w-7xl px-5 pt-6">
-        <div className="relative h-[clamp(260px,42vw,420px)] overflow-hidden rounded-[1.6rem] border border-white/10 bg-[#11151e] shadow-[0_22px_70px_rgba(0,0,0,.42)]">
+        <div ref={trailerHeroRef} className="relative h-[clamp(260px,42vw,420px)] overflow-hidden rounded-[1.6rem] border border-white/10 bg-[#11151e] shadow-[0_22px_70px_rgba(0,0,0,.42)]">
           {activeTrailer?.trailer_url && <video ref={trailerVideoRef} key={activeTrailer.id} src={activeTrailer.trailer_url} poster={activeTrailer.poster_url || undefined} autoPlay muted={trailerMuted} playsInline loop preload="metadata" onCanPlay={() => { const playPromise = trailerVideoRef.current?.play(); playPromise?.catch(() => setTrailerNeedsTap(true)); }} onPlaying={() => { setTrailerPlaying(true); setTrailerNeedsTap(false); setTrailerFailed(false); }} onError={() => { setTrailerPlaying(false); setTrailerFailed(true); }} className="absolute inset-0 h-full w-full object-cover" /> }
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/15" />
           <div className="absolute right-4 top-4 z-10 rounded-full border border-white/25 bg-black/60 px-4 py-2 text-[10px] font-black uppercase tracking-[.18em] text-white backdrop-blur-md sm:right-6 sm:top-6">{activeTrailer?.category_name || "Featured preview"}</div>
@@ -255,7 +261,7 @@ export default function Browse() {
         <p className="mt-2 text-xs text-white/45">Sample titles are for testing only and are not saved to your account.</p>
         <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {loading ? Array.from({ length: 10 }, (_, i) => <div key={i} className="aspect-[2/3] animate-pulse rounded-2xl bg-white/5" />) : filtered.map((x) => {
-            const card = <><div className="relative aspect-[2/3] overflow-hidden bg-[#1c2029]">{x.poster_url ? <img src={x.poster_url} alt={x.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /> : <div className="flex h-full items-end bg-gradient-to-br from-slate-700 to-slate-950 p-4"><span className="text-lg font-black">{x.title}</span></div>}{x.is_demo && <span className="absolute left-3 top-3 rounded-full bg-[#e73545] px-2.5 py-1 text-[10px] font-bold tracking-wide">DEMO</span>}</div><div className="p-4"><h3 className="line-clamp-1 text-sm font-bold">{x.title}</h3><p className="mt-1 text-xs text-white/50">{x.release_year || "New"}{x.duration_minutes ? " · " + x.duration_minutes + " min" : ""}</p><p className="mt-2 line-clamp-2 text-xs leading-5 text-white/50">{x.description}</p><p className="mt-3 text-xs font-bold text-[#ff8791]">{x.is_demo ? "Sample title · Preview only" : "View title →"}</p></div></>;
+            const card = <><div className="relative aspect-[2/3] overflow-hidden bg-[#1c2029]">{x.poster_url ? <img src={x.poster_url} alt={x.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /> : <div className="flex h-full items-end bg-gradient-to-br from-slate-700 to-slate-950 p-4"><span className="text-lg font-black">{x.title}</span></div>}{x.is_demo && <span className="absolute left-3 top-3 rounded-full bg-[#e73545] px-2.5 py-1 text-[10px] font-bold tracking-wide">DEMO</span>}{!x.is_demo && <span className="absolute inset-0 grid place-items-center bg-black/0 transition group-hover:bg-black/25"><span className="grid h-14 w-14 place-items-center rounded-full border border-white/60 bg-black/65 text-xl text-white shadow-xl backdrop-blur-sm">▶</span></span>}</div><div className="p-4"><h3 className="line-clamp-1 text-sm font-bold">{x.title}</h3><p className="mt-1 text-xs text-white/50">{x.release_year || "New"}{x.duration_minutes ? " · " + x.duration_minutes + " min" : ""}</p><p className="mt-2 line-clamp-2 text-xs leading-5 text-white/50">{x.description}</p><p className="mt-3 text-xs font-bold text-[#ff8791]">{x.is_demo ? "Sample title · Preview only" : "▶ Play movie"}</p></div></>;
             return x.is_demo && x.trailer_url ? <button key={x.id} type="button" onClick={() => { const index = trailerMovies.findIndex((movie) => movie.id === x.id); if (index >= 0) { setActiveTrailerIndex(index); setTrailerMuted(true); window.scrollTo({ top: 0, behavior: "smooth" }); } }} className="group overflow-hidden rounded-2xl border border-dashed border-white/15 bg-[#111319] text-left transition hover:-translate-y-1 hover:border-[#ff8791]/60">{card}</button> : x.is_demo ? <div key={x.id} className="group overflow-hidden rounded-2xl border border-dashed border-white/15 bg-[#111319]">{card}</div> : <Link key={x.id} href={"/content/" + x.id} className="group overflow-hidden rounded-2xl border border-white/10 bg-[#111319] transition hover:-translate-y-1 hover:border-white/25">{card}</Link>;
           })}
         </div>
@@ -263,4 +269,17 @@ export default function Browse() {
       </section>
     </main>
   );
-}
+}  useEffect(() => {
+    const node = trailerHeroRef.current;
+    if (!node || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting || entry.intersectionRatio < 0.25) {
+        if (trailerVideoRef.current) trailerVideoRef.current.muted = true;
+        setTrailerMuted(true);
+      }
+    }, { threshold: [0, 0.25, 0.5] });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [activeTrailer?.id]);
+
+
