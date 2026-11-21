@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || "https://bwzbtwclfvdgezyqvswr.supabase.co").trim().replace(/\/$/, "");
-  const key = (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_fb8HkxyfjD0HGwthYXxYNA_riP2qpp1").trim();
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim().replace(/\/$/, "") || "https://bwzbtwclfvdgezyqvswr.supabase.co";
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim() || "sb_publishable_fb8HkxyfjD0HGwthYXxYNA_riP2qpp1";
 
   try {
     const body = await request.json();
@@ -27,7 +27,12 @@ export async function POST(request: Request) {
     }
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
-    const timedOut = error instanceof Error && error.name === "TimeoutError";
+    console.error("[STREAM UG auth] Supabase request failed", {
+      name: error instanceof Error ? error.name : "UnknownError",
+      message: error instanceof Error ? error.message : String(error),
+      cause: error instanceof Error ? (error as Error & { cause?: unknown }).cause : undefined,
+    });
+    const timedOut = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
     return NextResponse.json(
       { error: timedOut ? "The sign-in service took too long to respond. Please try again." : "STREAM UG couldn't reach its secure sign-in service. Please try again in a moment." },
       { status: 502 },
