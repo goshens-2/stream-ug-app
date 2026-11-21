@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import SiteHeader from "@/src/components/site-header";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -18,6 +18,7 @@ type Content = {
 
 export default function ContentDetail() {
   const { id } = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const [item, setItem] = useState<Content | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -75,6 +76,10 @@ export default function ContentDetail() {
     })();
     return () => { live = false; };
   }, [id, client]);
+
+  useEffect(() => {
+    if (item && !fav && searchParams.get("watchlist") === "add") setScheduleOpen(true);
+  }, [item, fav, searchParams]);
 
   const toggleFavorite = useCallback(async () => {
     const currentUserId = userId.current;
