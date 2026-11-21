@@ -28,18 +28,35 @@ export default function Login() {
     setBusy(true);
     setError("");
     try {
-      const supabase = createClient();
-      const { error: authError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-      if (authError) {
-        setError(authError.message);
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
+        cache: "no-store",
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setError(result.error || "We couldn't sign you in. Please try again.");
         setBusy(false);
         return;
       }
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: profile } = await supabase.from("profiles").select("is_admin").eq("id", user?.id || "").maybeSingle();
-      window.location.assign(profile?.is_admin ? "/admin" : "/browse");
+      if (!result.access_token || !result.refresh_token) {
+        setError("Sign-in did not complete. Please try again.");
+        setBusy(false);
+        return;
+      }
+      const { error: sessionError } = await createClient().auth.setSession({
+        access_token: result.access_token,
+        refresh_token: result.refresh_token,
+      });
+      if (sessionError) {
+        setError("Your sign-in was accepted, but we couldn't save your session. Please try again.");
+        setBusy(false);
+        return;
+      }
+      window.location.assign("/browse");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to reach STREAM UG authentication. Check your internet connection and try again.");
+      setError(err instanceof TypeError ? "STREAM UG couldn't connect securely. Check your internet connection and try again." : err instanceof Error ? err.message : "We couldn't complete sign-in. Please try again.");
       setBusy(false);
     }
   }
