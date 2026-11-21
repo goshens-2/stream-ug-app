@@ -60,7 +60,10 @@ export function WatermarkedVideo({
           loop={loop}
           muted={muted}
           controls={controls}
+          controlsList="nodownload noremoteplayback"
+          disablePictureInPicture
           playsInline
+          onContextMenu={(event) => event.preventDefault()}
           onTimeUpdate={onTimeUpdate}
         />
       ) : (
