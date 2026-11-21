@@ -28,8 +28,8 @@ export default function TrailersPage() {
     const supabase = createClient();
     let active = true;
     void (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { window.location.replace("/login"); return; }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { window.location.replace("/login"); return; }
       const { data, error } = await supabase.from("content")
         .select("id,title,description,poster_url,trailer_url,release_year,duration_minutes")
         .not("trailer_url", "is", null)
@@ -72,7 +72,7 @@ export default function TrailersPage() {
       {loading ? <div className="aspect-video animate-pulse rounded-3xl bg-white/5" />
       : activeTrailer ? <>
         <section className="relative isolate aspect-video max-h-[min(68vw,620px)] overflow-hidden rounded-3xl border border-white/10 bg-black shadow-[0_24px_80px_rgba(0,0,0,.45)]">
-          <video ref={videoRef} key={activeTrailer.id} src={activeTrailer.trailer_url} poster={activeTrailer.poster_url || undefined} autoPlay muted={muted} playsInline loop controls preload="auto" onCanPlay={() => { const playPromise = videoRef.current?.play(); playPromise?.catch(() => setNeedsTap(true)); }} onPlaying={() => { setIsPlaying(true); setNeedsTap(false); setPlaybackError(false); }} onError={() => { setIsPlaying(false); setPlaybackError(true); }} className="absolute inset-0 h-full w-full object-contain" />
+          <video ref={videoRef} key={activeTrailer.id} src={activeTrailer.trailer_url} poster={activeTrailer.poster_url || undefined} autoPlay muted={muted} playsInline loop controls preload="metadata" onCanPlay={() => { const playPromise = videoRef.current?.play(); playPromise?.catch(() => setNeedsTap(true)); }} onPlaying={() => { setIsPlaying(true); setNeedsTap(false); setPlaybackError(false); }} onError={() => { setIsPlaying(false); setPlaybackError(true); }} className="absolute inset-0 h-full w-full object-contain" />
           {(needsTap || playbackError) && <div className="absolute inset-0 z-20 grid place-items-center bg-black/75 px-6 text-center"><div><p className="text-sm font-bold text-white">{playbackError ? "This preview could not be loaded." : "Tap to start the preview."}</p><button type="button" onClick={() => { if (playbackError) nextTrailer(); else { const playPromise = videoRef.current?.play(); playPromise?.then(() => setNeedsTap(false)).catch(() => setNeedsTap(true)); } }} className="mt-4 rounded-full bg-[#e73545] px-5 py-3 text-xs font-bold text-white">{playbackError ? "Try next preview" : "Play preview"}</button></div></div>}
           <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent px-5 pb-5 pt-16 sm:px-8 sm:pb-7">
             <p className="text-[10px] font-black uppercase tracking-[.2em] text-[#ff9ba4]">{activeTrailer.category || "STREAM UG preview"} · Playing now</p>
@@ -86,7 +86,7 @@ export default function TrailersPage() {
         <div className="mt-8 flex items-center justify-between gap-3"><h2 className="text-lg font-bold">Up next</h2><p className="text-xs text-white/40">Choose a title to play it now</p></div>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {trailers.map((item, index) => <button key={item.id} type="button" onClick={() => { setActiveIndex(index); setMuted(true); }} className={"overflow-hidden rounded-2xl border text-left transition " + (index === activeIndex ? "border-[#f04455] bg-[#21151a]" : "border-white/10 bg-[#12151d] hover:border-white/30")}>
-            <div className="relative aspect-video bg-black"><img src={item.poster_url || "/placeholder-movie.png"} alt="" className="h-full w-full object-cover opacity-75"/><span className="absolute inset-0 grid place-items-center text-2xl text-white drop-shadow">▶</span></div>
+            <div className="relative aspect-video bg-black"><img src={item.poster_url || "/placeholder-movie.png"} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover opacity-75"/><span className="absolute inset-0 grid place-items-center text-2xl text-white drop-shadow">▶</span></div>
             <div className="p-3"><p className="truncate text-sm font-bold">{item.title}</p><p className="mt-1 text-[10px] uppercase tracking-wider text-white/45">{item.category || "STREAM UG"}{item.is_demo ? " · SAMPLE" : ""}</p></div>
           </button>)}
         </div>
