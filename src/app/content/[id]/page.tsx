@@ -19,6 +19,7 @@ type Content = {
 export default function ContentDetail() {
   const { id } = useParams<{ id: string }>();
   const [item, setItem] = useState<Content | null>(null);
+  const [similar, setSimilar] = useState<Content[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [fav, setFav] = useState(false);
@@ -62,6 +63,20 @@ export default function ContentDetail() {
           : Promise.resolve({ data: null }),
       ]);
       if (!live) return;
+      let relatedQuery = client.from("content")
+        .select("id,title,description,poster_url,video_url,trailer_url,embed_url,release_year,duration_minutes,director,cast,genres,language,age_rating,category_id,content_type_id,watermark_enabled,watermark_text,watermark_opacity,watermark_position")
+        .neq("id", id)
+        .limit(8);
+      if (Array.isArray(content.genres) && content.genres.length) {
+        relatedQuery = relatedQuery.overlaps("genres", content.genres);
+      } else if (content.category_id) {
+        relatedQuery = relatedQuery.eq("category_id", content.category_id);
+      } else if (content.content_type_id) {
+        relatedQuery = relatedQuery.eq("content_type_id", content.content_type_id);
+      }
+      const { data: related } = await relatedQuery;
+      if (!live) return;
+      setSimilar((related || []) as Content[]);
       setItem(content as Content);
       setTrailer(Boolean(content.trailer_url));
       setFav(Boolean(favorite));
@@ -222,6 +237,35 @@ export default function ContentDetail() {
             </div>
           </div>
         </div>
+        {similar.length > 0 && (
+          <section className="mt-10">
+            <div className="mb-5 flex items-end justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[.2em] text-[#ef6875]">MORE TO EXPLORE</p>
+                <h2 className="mt-2 text-2xl font-black sm:text-3xl">Similar Movies</h2>
+                <p className="mt-1 text-sm text-white/45">More titles related to {item.title}</p>
+              </div>
+              <Link href="/browse" className="text-sm font-semibold text-white/55 hover:text-white">Browse all →</Link>
+            </div>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {similar.map((movie) => (
+                <Link key={movie.id} href={"/content/" + movie.id} className="group overflow-hidden rounded-2xl border border-white/10 bg-[#12141b] transition hover:-translate-y-1 hover:border-white/25">
+                  <div className="aspect-[2/3] overflow-hidden bg-white/5">
+                    {movie.poster_url ? (
+                      <img src={movie.poster_url} alt={movie.title} loading="lazy" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center p-4 text-center text-sm font-bold text-white/35">{movie.title}</div>
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <h3 className="line-clamp-2 font-bold text-white">{movie.title}</h3>
+                    <p className="mt-1 text-xs text-white/45">{[movie.release_year, movie.duration_minutes ? movie.duration_minutes + " min" : null].filter(Boolean).join(" · ") || "Movie"}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
       {scheduleOpen && <div className="fixed inset-0 z-[80] grid place-items-center bg-black/75 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="watchlist-schedule-title">
         <div className="w-full max-w-md rounded-2xl border border-white/15 bg-[#151821] p-6 shadow-2xl">
