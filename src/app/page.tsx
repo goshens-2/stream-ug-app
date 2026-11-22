@@ -98,7 +98,7 @@ export default function Home() {
           </div>
 
           <div className="relative mt-10 flex items-center justify-between gap-4">
-            <p className="text-[10px] font-bold tracking-[.12em] text-white/65">Engineered by <span className="font-black text-blue-500">V</span><span className="font-semibold text-blue-400">ision</span></p>
+            <p className="text-xl font-extrabold tracking-[.025em] text-white sm:text-2xl lg:text-3xl">Engineered by <span className="font-black text-blue-400">Vision</span></p>
             <div className="flex items-center gap-2" aria-label="Choose featured slide">
               {slides.map((item, index) => (
                 <button
