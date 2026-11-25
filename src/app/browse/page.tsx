@@ -152,12 +152,6 @@ export default function Browse() {
     return () => window.clearTimeout(timer);
   }, [trailerPlaying, activeTrailer?.id, trailerMovies.length]);
   useEffect(() => {
-    if (rotatingSuggestions.length < 2) return;
-    const timer = window.setInterval(() => setSuggestionIndex((value) => (value + 1) % rotatingSuggestions.length), 4200);
-    return () => window.clearInterval(timer);
-  }, [rotatingSuggestions.length]);
-
-  useEffect(() => {
     if (!categoriesOpen) return;
     const closeWhenScrolledAway = () => {
       if (window.scrollY > categoriesOpenAt + 260) { setCategoriesOpen(false); setShowAllCategories(false); }
