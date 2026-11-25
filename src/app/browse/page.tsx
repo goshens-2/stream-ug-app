@@ -125,9 +125,12 @@ export default function Browse() {
     const categoryName = cats.find((category) => category.id === x.category_id)?.name
       || demoCategories.find((category) => category.id === x.category_id)?.name || "";
     const term = q.trim().toLowerCase();
-    return (cat === "all" || x.category_id === cat)
+    const assignedVjs = vjAssignments[x.id] || [];
+    const matchesVj = selectedVj === "all"
+      || (selectedVj === "non-translated" ? !x.is_demo && assignedVjs.length === 0 : assignedVjs.includes(selectedVj));
+    return matchesVj && (cat === "all" || x.category_id === cat)
       && (!term || x.title.toLowerCase().includes(term) || (x.description || "").toLowerCase().includes(term) || categoryName.toLowerCase().includes(term));
-  }), [allMovies, cat, q, cats]);
+  }), [allMovies, cat, q, cats, selectedVj, vjAssignments]);
   const suggestions = useMemo(() => {
     const term = q.trim().toLowerCase();
     return allMovies.filter((movie) => !term || movie.title.toLowerCase().includes(term) || (movie.description || "").toLowerCase().includes(term)).slice(0, 7);
@@ -207,6 +210,7 @@ export default function Browse() {
               <label htmlFor="vj-filter" className="sr-only">Choose a VJ</label>
               <select id="vj-filter" value={selectedVj} onChange={(event) => { setSelectedVj(event.target.value); document.getElementById("library-results")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} className="max-w-[190px] rounded-full border border-white/15 bg-[#151821] px-4 py-2.5 text-xs font-semibold text-white outline-none transition hover:border-[#f04455]/70 focus:border-[#f04455]">
                 <option value="all">All VJs</option>
+                <option value="non-translated">Non-translated</option>
                 {vjs.map((vj) => <option key={vj.id} value={vj.id}>{vj.name}</option>)}
               </select>
             </div>
@@ -248,6 +252,7 @@ export default function Browse() {
           <label htmlFor="vj-filter-mobile" className="text-xs font-semibold text-white/60">VJ</label>
           <select id="vj-filter-mobile" value={selectedVj} onChange={(event) => setSelectedVj(event.target.value)} className="min-w-0 max-w-[180px] rounded-full border border-white/15 bg-[#151821] px-3 py-2 text-xs font-semibold text-white outline-none focus:border-[#f04455]">
             <option value="all">All VJs</option>
+            <option value="non-translated">Non-translated</option>
             {vjs.map((vj) => <option key={vj.id} value={vj.id}>{vj.name}</option>)}
           </select>
         </div>
@@ -305,7 +310,7 @@ export default function Browse() {
         `}</style>
 
         <div id="library-results" className="mt-8 flex items-center justify-between scroll-mt-28">
-          <div><h2 className="text-xl font-bold text-white">Explore the library</h2><p className="mt-1 text-xs text-[#ff9ba4]">Showing: {selectedVj === "all" ? "All VJs" : vjs.find((vj) => vj.id === selectedVj)?.name || "Selected VJ"} · {selectedCategoryName}</p></div><span className="text-xs text-white/55">{filtered.length} titles</span>
+          <div><h2 className="text-xl font-bold text-white">Explore the library</h2><p className="mt-1 text-xs text-[#ff9ba4]">Showing: {selectedVj === "all" ? "All VJs" : selectedVj === "non-translated" ? "Non-translated" : vjs.find((vj) => vj.id === selectedVj)?.name || "Selected VJ"} · {selectedCategoryName}</p></div><span className="text-xs text-white/55">{filtered.length} titles</span>
         </div>
         <p className="mt-2 text-xs text-white/45">Sample titles are for testing only and are not saved to your account.</p>
         <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
