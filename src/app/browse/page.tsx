@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 
 type Movie = { id: string; title: string; description: string | null; poster_url: string | null; trailer_url?: string | null; video_url?: string | null; embed_url?: string | null; release_year: number | null; duration_minutes: number | null; category_id: string | null; is_demo?: boolean };
 type Category = { id: string; name: string; slug: string };
+type VJ = { id: string; name: string; slug: string };
 const demoCategories: Category[] = [
   { id: "demo-action", name: "Action (Sample)", slug: "demo-action" },
   { id: "demo-drama", name: "Drama (Sample)", slug: "demo-drama" },
@@ -44,6 +45,9 @@ function BellGlyph() {
 export default function Browse() {
   const [items, setItems] = useState<Movie[]>([]);
   const [cats, setCats] = useState<Category[]>([]);
+  const [vjs, setVjs] = useState<VJ[]>([]);
+  const [vjAssignments, setVjAssignments] = useState<Record<string, string[]>>({});
+  const [selectedVj, setSelectedVj] = useState("all");
   const [name, setName] = useState("there");
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("all");
@@ -56,7 +60,7 @@ export default function Browse() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [activeTrailerIndex, setActiveTrailerIndex] = useState(0);
-  const [suggestionIndex, setSuggestionIndex] = useState(0);
+
   const [trailerMuted, setTrailerMuted] = useState(true);
   const [trailerPlaying, setTrailerPlaying] = useState(false);
   const [trailerNeedsTap, setTrailerNeedsTap] = useState(false);
@@ -84,6 +88,17 @@ export default function Browse() {
       setName(p?.name || session.user.email?.split("@")[0] || "there");
       setItems((c || []) as Movie[]);
       setCats((k || []) as Category[]);
+      const [{ data: vjRows }, { data: assignmentRows }] = await Promise.all([
+        s.from("vjs").select("id,name,slug").eq("is_active", true).order("name"),
+        s.from("content_vjs").select("content_id,vj_id"),
+      ]);
+      if (!live) return;
+      setVjs((vjRows || []) as VJ[]);
+      const assignments: Record<string, string[]> = {};
+      (assignmentRows || []).forEach((row: { content_id: string; vj_id: string }) => {
+        (assignments[row.content_id] ||= []).push(row.vj_id);
+      });
+      setVjAssignments(assignments);
       setUnread(count || 0);
       const lastSeenAt = window.localStorage.getItem("stream-ug-continue-seen:" + session.user.id);
       setContinueCount((historyRows || []).filter((row) =>
@@ -194,10 +209,13 @@ export default function Browse() {
             <Link href="/history" className="transition hover:text-white">Continue watching{continueCount > 0 ? " (" + continueCount + ")" : ""}</Link>
           </nav>
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
-            {rotatingSuggestions.length > 0 && <button type="button" onClick={() => { const title = rotatingSuggestions[suggestionIndex % rotatingSuggestions.length].title; setQ(title); setSearchOpen(true); setProfileOpen(false); }} className="hidden max-w-[190px] items-center gap-2 overflow-hidden rounded-full border border-white/10 bg-white/[.045] px-3 py-2 text-left transition hover:border-[#f04455]/60 md:flex">
-              <span className="shrink-0 text-[9px] font-black uppercase tracking-[.16em] text-[#ff8791]">Try</span>
-              <span key={rotatingSuggestions[suggestionIndex % rotatingSuggestions.length].id} className="truncate text-xs font-semibold text-white/85">{rotatingSuggestions[suggestionIndex % rotatingSuggestions.length].title}</span>
-            </button>}
+            <div className="relative hidden md:block">
+              <label htmlFor="vj-filter" className="sr-only">Choose a VJ</label>
+              <select id="vj-filter" value={selectedVj} onChange={(event) => { setSelectedVj(event.target.value); document.getElementById("library-results")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} className="max-w-[190px] rounded-full border border-white/15 bg-[#151821] px-4 py-2.5 text-xs font-semibold text-white outline-none transition hover:border-[#f04455]/70 focus:border-[#f04455]">
+                <option value="all">All VJs</option>
+                {vjs.map((vj) => <option key={vj.id} value={vj.id}>{vj.name}</option>)}
+              </select>
+            </div>
             <div className="relative">
               {searchOpen && (
                 <div className="absolute right-0 top-[calc(100%+14px)] z-50 w-[min(92vw,390px)] overflow-hidden rounded-2xl border border-white/15 bg-[#151821] p-4 shadow-[0_24px_70px_rgba(0,0,0,.6)]">
@@ -231,6 +249,13 @@ export default function Browse() {
               </div>}
             </div>
           </div>
+        </div>
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-5 pb-3 md:hidden">
+          <label htmlFor="vj-filter-mobile" className="text-xs font-semibold text-white/60">VJ</label>
+          <select id="vj-filter-mobile" value={selectedVj} onChange={(event) => setSelectedVj(event.target.value)} className="min-w-0 max-w-[180px] rounded-full border border-white/15 bg-[#151821] px-3 py-2 text-xs font-semibold text-white outline-none focus:border-[#f04455]">
+            <option value="all">All VJs</option>
+            {vjs.map((vj) => <option key={vj.id} value={vj.id}>{vj.name}</option>)}
+          </select>
         </div>
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-5 pb-3 lg:hidden">
           <Link href="/trailers" className="text-xs font-semibold text-white/75">Trailers</Link>
@@ -286,7 +311,7 @@ export default function Browse() {
         `}</style>
 
         <div id="library-results" className="mt-8 flex items-center justify-between scroll-mt-28">
-          <div><h2 className="text-xl font-bold text-white">Explore the library</h2><p className="mt-1 text-xs text-[#ff9ba4]">Showing: {selectedCategoryName}</p></div><span className="text-xs text-white/55">{filtered.length} titles</span>
+          <div><h2 className="text-xl font-bold text-white">Explore the library</h2><p className="mt-1 text-xs text-[#ff9ba4]">Showing: {selectedVj === "all" ? "All VJs" : vjs.find((vj) => vj.id === selectedVj)?.name || "Selected VJ"} · {selectedCategoryName}</p></div><span className="text-xs text-white/55">{filtered.length} titles</span>
         </div>
         <p className="mt-2 text-xs text-white/45">Sample titles are for testing only and are not saved to your account.</p>
         <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
